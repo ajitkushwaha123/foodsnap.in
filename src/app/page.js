@@ -1,9 +1,12 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { search } from "@/helpers/api/search";
 import Card from "@/components/global/Photo/Card";
 import SearchBar from "@/components/global/Search";
+import { Sparkles } from "lucide-react";
+import InsufficientCredits from "@/components/global/user/InsufficientCredits";
 
 const SkeletonCard = () => (
   <div className="animate-pulse bg-[#0a0a1a] border border-zinc-800 rounded-2xl shadow-inner overflow-hidden">
@@ -18,18 +21,23 @@ const SkeletonCard = () => (
 const Page = () => {
   const [data, setData] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
+  const [creditsError, setCreditsError] = React.useState(false);
+  const router = useRouter();
 
   const handleSearch = async (query) => {
-    if (!query) {
-      console.error("Search query is required");
-      return;
-    }
+    if (!query) return;
 
     setLoading(true);
+    setCreditsError(false);
     try {
       const { results } = await search({ query });
       setData(results || []);
     } catch (err) {
+      if (err?.response?.status === 402) {
+        setCreditsError(true);
+        return;
+      }
+
       console.error("Search failed", err);
       setData([]);
     } finally {
@@ -39,13 +47,13 @@ const Page = () => {
 
   return (
     <div className="bg-[#0a0a1a] text-white px-4 py-8 min-h-screen transition-colors duration-300">
-      <div className="mx-auto">
-        <div className="max-w-6xl mx-auto">
-          <SearchBar onSearch={handleSearch} />
-        </div>
+      <div className="max-w-6xl mx-auto">
+        <SearchBar onSearch={handleSearch} />
 
         <div className="mt-10">
-          {loading ? (
+          {creditsError ? (
+            <InsufficientCredits />
+          ) : loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6 px-4">
               {Array.from({ length: 6 }).map((_, i) => (
                 <SkeletonCard key={i} />

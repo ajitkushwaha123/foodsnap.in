@@ -1,10 +1,13 @@
+import { updateCredits } from "@/helpers/global";
 import dbConnect from "@/lib/dbConnect";
 import Image from "@/models/Image";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export const GET = async (req) => {
   try {
     await dbConnect();
+    const { userId } = await auth();
 
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("search")?.trim();
@@ -84,12 +87,23 @@ export const GET = async (req) => {
       },
     ]);
 
+    const creditUpdate = await updateCredits(userId, 1);
+    console.log("[CREDITS_UPDATED]", creditUpdate);
+
+    if (!creditUpdate.success) {
+      return NextResponse.json(
+        { error: creditUpdate.message },
+        { status: 402 } 
+      );
+    }
+
     return NextResponse.json(
       {
         results,
         page,
         limit,
         message: "Search completed successfully",
+        credits: creditUpdate.credits,
       },
       { status: 200 }
     );

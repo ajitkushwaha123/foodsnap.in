@@ -9,9 +9,21 @@ import DashboardHeader from "../DashboardHeader";
 export default function AppShell({ children }) {
   const pathname = usePathname();
 
-  const isSidebarVisible = !["/sign-in", "/sign-up", "/library", "/admin"].some(
-    (path) => pathname.startsWith(path)
-  );
+  const isSidebarVisible = ![
+    "/sign-in",
+    "/sign-up",
+    "/library",
+    "/admin",
+    "/pricing",
+  ].some((path) => pathname.startsWith(path));
+
+  const isHeaderVisible = ![
+    "/sign-in",
+    "/sign-up",
+    "/library",
+    "/admin",
+    "/pricing",
+  ].some((path) => pathname.startsWith(path));
 
   const pageTitle = getPageTitle(pathname);
   const dummyCredits = 120;
@@ -26,7 +38,9 @@ export default function AppShell({ children }) {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className={`flex-1 ${isSidebarVisible ? "ml-64" : ""}`}
       >
-        <DashboardHeader title={pageTitle} credits={dummyCredits} />
+        {isHeaderVisible && (
+          <DashboardHeader title={pageTitle} credits={dummyCredits} />
+        )}
         {children}
       </motion.main>
     </div>
