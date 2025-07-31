@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { AlertCircle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 const InsufficientCredits = () => {
   const router = useRouter();
@@ -17,34 +17,36 @@ const InsufficientCredits = () => {
   }, [router]);
 
   return (
-    <div className="flex items-center justify-center min-h-[60vh] px-4">
+    <div className="flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-[#161622] border border-red-500/30 rounded-2xl p-8 shadow-2xl text-center w-full max-w-md"
+        transition={{ duration: 0.6 }}
+        className="bg-[#121212] border border-red-500/30 rounded-2xl p-6 text-center w-full max-w-sm"
       >
         <motion.div
           animate={{ scale: [1, 1.1, 1] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
+          transition={{ repeat: Infinity, duration: 1.6 }}
           className="flex justify-center mb-4"
         >
-          <AlertCircle className="text-red-500 w-12 h-12" />
+          <AlertTriangle className="text-red-500 w-12 h-12" />
         </motion.div>
+
         <h2 className="text-2xl font-bold text-white mb-2">
           Insufficient Credits
         </h2>
-        <p className="text-zinc-400 text-sm mb-6">
-          You need more credits to perform this action. Redirecting to the
-          pricing page...
+        <p className="text-zinc-400 text-sm mb-6 px-2">
+          You’re out of credits. Redirecting you to the pricing page...
         </p>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.97 }}
           onClick={() => router.push("/pricing")}
-          className="bg-red-600 hover:bg-red-700 transition-all duration-300 text-white px-6 py-2 rounded-xl text-sm font-semibold shadow-md"
+          className="bg-red-600 hover:bg-red-700 transition text-white px-5 py-2 rounded-lg text-sm font-medium"
         >
           Go to Pricing Now
-        </button>
+        </motion.button>
       </motion.div>
     </div>
   );

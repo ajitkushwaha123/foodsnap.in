@@ -51,7 +51,8 @@ export async function POST(req) {
             plan: "free",
             credits: 10,
             subscription: {
-              isActive: false,
+              isActive: true,
+              plan: "free",
             },
           });
           console.log("✅ User created in DB:", data.id);

@@ -21,6 +21,8 @@ export const GET = async () => {
 
     const { subscription } = user;
 
+    console.log("[USER_SUBSCRIPTION]", subscription);
+
     if (!subscription || !subscription.isActive) {
       return NextResponse.json(
         { error: "No active subscription found." },
