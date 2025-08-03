@@ -13,7 +13,7 @@ export default function UserSection() {
   if (!isSignedIn) return null;
 
   return (
-    <div className="px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 rounded-md">
+    <div className="px-4 py-2 border-zinc-200 dark:border-zinc-800 rounded-md">
       <div className="flex items-center gap-3">
         <div
           ref={userBtnRef}

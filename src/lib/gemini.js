@@ -1,7 +1,34 @@
 import axios from "axios";
+import { Buffer } from "buffer";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import dotenv from "dotenv";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+dotenv.config();
+
+// Load all valid Gemini keys from .env
+const keys = [
+  process.env.GEMINI_API_KEY1,
+  process.env.GEMINI_API_KEY2,
+  process.env.GEMINI_API_KEY3,
+  process.env.GEMINI_API_KEY4,
+  process.env.GEMINI_API_KEY5,
+  process.env.GEMINI_API_KEY6,
+  process.env.GEMINI_API_KEY7,
+  process.env.GEMINI_API_KEY8,
+  process.env.GEMINI_API_KEY9,
+  process.env.GEMINI_API_KEY10,
+  process.env.GEMINI_API_KEY11,
+  process.env.GEMINI_API_KEY12,
+].filter(Boolean);
+
+if (keys.length === 0) {
+  throw new Error("❌ No Gemini API keys found in environment variables.");
+}
+
+export function getRandomGeminiClient() {
+  const randomKey = keys[Math.floor(Math.random() * keys.length)];
+  return new GoogleGenerativeAI(randomKey.trim());
+}
 
 const extractValidJsonObjects = (incompleteJson) => {
   try {
@@ -10,7 +37,7 @@ const extractValidJsonObjects = (incompleteJson) => {
     if (!match) throw new Error("No JSON object found");
     return JSON.parse(match[0]);
   } catch (err) {
-    console.error("JSON extraction failed:", err.message);
+    console.error("❌ JSON extraction failed:", err.message);
     return null;
   }
 };
@@ -30,6 +57,7 @@ export const analyzeImageWithGemini = async ({
     });
     const base64Image = Buffer.from(imageRes.data).toString("base64");
 
+    const genAI = getRandomGeminiClient();
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const contextText = `
@@ -65,25 +93,35 @@ Only return a valid JSON object with no extra text, markdown, or explanation.
       },
     ]);
 
-    const rawText = result.response.candidates?.[0]?.content?.parts?.[0]?.text;
-    console.log("Gemini raw response:", rawText);
+    const rawText =
+      result?.response?.candidates?.[0]?.content?.parts?.[0]?.text;
+    console.log("🧠 Gemini raw response:", rawText);
 
     const extracted = extractValidJsonObjects(rawText);
     if (!extracted) throw new Error("Invalid Gemini output");
+
+    const normalizedFoodType =
+      extracted.food_type?.toLowerCase?.() ?? food_type ?? "veg";
+    const validFoodType = ["veg", "non_veg", "egg"].includes(normalizedFoodType)
+      ? normalizedFoodType
+      : "veg";
+
+    const cleanScore = (val) => {
+      let score = typeof val === "number" ? val : parseFloat(val);
+      if (isNaN(score) || score < 1) return 1;
+      if (score > 10) return 10;
+      return Math.round(score);
+    };
 
     const finalObject = {
       title: extracted.title || title || "Untitled",
       auto_tags: Array.isArray(extracted.auto_tags) ? extracted.auto_tags : [],
       cuisine: extracted.cuisine || "Unknown",
-      quality_score: extracted.quality_score || 10,
+      quality_score: cleanScore(extracted.quality_score),
       description: extracted.description || description,
       category: extracted.category || category,
       sub_category: extracted.sub_category || sub_category,
-      food_type: ["veg", "non_veg", "egg"].includes(
-        extracted.food_type?.toLowerCase()
-      )
-        ? extracted.food_type.toLowerCase()
-        : food_type || "veg",
+      food_type: validFoodType,
       image_url,
       approved: false,
       system_approved: true,
@@ -94,10 +132,9 @@ Only return a valid JSON object with no extra text, markdown, or explanation.
       resId: resId || null,
     };
 
-    console.log("Final image object:", finalObject);
     return finalObject;
   } catch (error) {
-    console.error("Gemini analysis failed:", error.message);
+    console.error("❌ Gemini analysis failed:", error.message);
     return null;
   }
 };

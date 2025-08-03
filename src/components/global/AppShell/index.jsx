@@ -1,13 +1,42 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Provider } from "react-redux";
+import { store } from "@/store";
 import Sidebar from "../Sidebar";
-import { motion } from "framer-motion";
-import { LayoutDashboard, Home, Users, Settings } from "lucide-react";
 import DashboardHeader from "../DashboardHeader";
+import { Toaster } from "react-hot-toast";
+import { Home, Users, Settings, Heart } from "lucide-react";
+
+const navItems = [
+  { label: "Home", icon: Home, href: "/" },
+  { label: "Users", icon: Users, href: "/users" },
+  { label: "Settings", icon: Settings, href: "/settings" },
+  { label: "Wishlist", icon: Heart, href: "/wishlist" },
+];
+
+function getPageTitle(pathname) {
+  const nav = navItems.find((item) =>
+    pathname === "/" ? item.href === "/" : pathname.startsWith(item.href)
+  );
+  return nav?.label || "Dashboard";
+}
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize(); 
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   const isSidebarVisible = ![
     "/sign-in",
@@ -17,43 +46,55 @@ export default function AppShell({ children }) {
     "/pricing",
   ].some((path) => pathname.startsWith(path));
 
-  const isHeaderVisible = ![
-    "/sign-in",
-    "/sign-up",
-    "/library",
-    "/admin",
-    "/pricing",
-  ].some((path) => pathname.startsWith(path));
+  const isHeaderVisible = isSidebarVisible; 
 
   const pageTitle = getPageTitle(pathname);
   const dummyCredits = 120;
 
   return (
-    <div className="min-h-screen flex bg-white dark:bg-[#0a0a1a] transition-colors duration-300 ease-in-out">
-      {isSidebarVisible && <Sidebar navItems={navItems} />}
+    <Provider store={store}>
+      <div className="min-h-screen flex bg-white dark:bg-[#0a0a1a] transition-colors duration-300 ease-in-out relative">
 
-      <motion.main
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className={`flex-1 ${isSidebarVisible ? "ml-64" : ""}`}
-      >
-        {isHeaderVisible && (
-          <DashboardHeader title={pageTitle} credits={dummyCredits} />
-        )}
-        {children}
-      </motion.main>
-    </div>
+        {isSidebarVisible && !isMobile && <Sidebar navItems={navItems} />}
+
+        <AnimatePresence>
+          {isSidebarVisible && isMobile && isSidebarOpen && (
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 z-50 flex"
+            >
+              <div
+                className="absolute inset-0 bg-black/30"
+                onClick={toggleSidebar}
+              />
+              <Sidebar navItems={navItems} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <Toaster position="top-right" />
+
+        <motion.main
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className={`flex-1 transition-all ${
+            isSidebarVisible && !isMobile ? "ml-72" : ""
+          }`}
+        >
+          {isHeaderVisible && (
+            <DashboardHeader
+              title={pageTitle}
+              credits={dummyCredits}
+              toggleSidebar={toggleSidebar} 
+            />
+          )}
+          {children}
+        </motion.main>
+      </div>
+    </Provider>
   );
 }
-
-function getPageTitle(pathname) {
-  const nav = navItems.find((item) => pathname.startsWith(item.href));
-  return nav?.label || "Dashboard";
-}
-
-export const navItems = [
-  { label: "Home", icon: Home, href: "/" },
-  { label: "Users", icon: Users, href: "/users" },
-  { label: "Settings", icon: Settings, href: "/settings" },
-];

@@ -1,56 +1,93 @@
-import { Heart, Download, Star } from "lucide-react";
+"use client";
 
-export default function Card({ image }) {
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
+import { Download } from "lucide-react";
+import toast from "react-hot-toast";
+import { useWishlist } from "@/store/hooks/useWishlist";
+
+const Card = ({ image, index, isWishlisted }) => {
+  const { addToWishlist, removeFromWishlist } = useWishlist();
+  const [loading, setLoading] = useState(false);
+
+  const toggleWishlist = async () => {
+    if (!image?._id || loading) return;
+    setLoading(true);
+    try {
+      if (isWishlisted) {
+        await removeFromWishlist(image._id);
+        toast.success("Removed from wishlist");
+      } else {
+        await addToWishlist(image._id);
+        toast.success("Added to wishlist");
+      }
+    } catch (error) {
+      console.error("Wishlist toggle failed:", error);
+      toast.error("Wishlist update failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = image.image_url;
-    link.download = `${image.title}.jpg`;
-    link.click();
+    try {
+      const link = document.createElement("a");
+      link.href = image.image_url;
+      link.download = `${image.title || "image"}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Image downloaded!");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Image download failed.");
+    }
   };
 
   return (
-    <div className="relative group rounded-md overflow-hidden border border-transparent bg-gradient-to-br from-zinc-100 to-white dark:from-zinc-800 dark:to-zinc-900 shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.2)] transition-all duration-300">
-      <div className="relative overflow-hidden">
-        <img
-          src={image.image_url}
-          alt={image.title}
-          className="w-full h-60 object-cover transition-transform duration-300 group"
-        />
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="relative rounded-md border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 p-3 shadow-md flex flex-col gap-3 transition-all"
+    >
+      <img
+        loading="lazy"
+        src={image.image_url}
+        alt={image.title || "Gallery image"}
+        className="w-full h-56 object-cover rounded-md border border-zinc-200 dark:border-white/10"
+      />
 
-        {image.premium && (
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 shadow-lg backdrop-blur-sm">
-            <Star size={14} />
-            Premium
-          </div>
-        )}
+      <div className="absolute top-3 right-3 flex gap-2">
+        <motion.button
+          onClick={toggleWishlist}
+          whileTap={{ scale: 1.2 }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="bg-white/80 dark:bg-black/50 p-1.5 rounded-md flex items-center justify-center"
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          disabled={loading}
+        >
+          {loading ? (
+            <span className="w-5 h-5 inline-block animate-spin rounded-full border-2 border-t-transparent border-black dark:border-white" />
+          ) : isWishlisted ? (
+            <AiFillHeart className="w-5 h-5 text-red-500" />
+          ) : (
+            <AiOutlineHeart className="w-5 h-5 text-black dark:text-white" />
+          )}
+        </motion.button>
 
-        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button
-            className="bg-white dark:bg-zinc-800 p-2 rounded-full shadow-xl hover:shadow-2xl transition-all"
-            title="Add to Wishlist"
-          >
-            <Heart size={16} className="text-red-500" />
-          </button>
-          <button
-            onClick={handleDownload}
-            className="bg-white dark:bg-zinc-800 p-2 rounded-full shadow-xl hover:shadow-2xl transition-all"
-            title="Download"
-          >
-            <Download size={16} />
-          </button>
-        </div>
+        <button
+          onClick={handleDownload}
+          className="bg-white/80 dark:bg-black/50 p-1.5 rounded-md hover:scale-105 transition"
+          aria-label="Download image"
+        >
+          <Download className="w-5 h-5 text-black dark:text-white" />
+        </button>
       </div>
-
-      <div className="p-2 px-4 bg-white/50 dark:bg-[#0a0a1a] transition-colors">
-        <h3 className="text-lg font-bold text-zinc-800 dark:text-white truncate tracking-wide">
-          {image.title}
-        </h3>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 capitalize">
-          {image.cuisine || image.tags?.[0] || "Uncategorized"}
-        </p>
-      </div>
-
-      <div className="absolute inset-0 rounded-xl ring-1 ring-transparent group-hover:ring-pink-400 group-hover:ring-offset-2 transition-all duration-300 pointer-events-none" />
-    </div>
+    </motion.div>
   );
-}
+};
+
+export default Card;

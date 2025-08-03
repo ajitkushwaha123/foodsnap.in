@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import { analyzeImageWithGemini } from "@/lib/gemini";
+import Image from "@/models/Image";
 
 export const POST = async (req) => {
   try {
     await dbConnect();
-    const body = await req.json();
 
+    const body = await req.json();
     const {
       image_url,
       title,
@@ -37,12 +38,20 @@ export const POST = async (req) => {
       resId,
     });
 
-    console.log("Analysis result:", analysisResult);
+    console.log("✅ Image analysis completed:", analysisResult);
 
-    return NextResponse.json(
-      { success: true, image: analysisResult },
-      { status: 201 }
-    );
+    if (!analysisResult) {
+      return NextResponse.json(
+        { error: "Image analysis failed." },
+        { status: 500 }
+      );
+    }
+
+    const image = await Image.create(analysisResult);
+
+    console.log("✅ Image saved to database:", image);
+
+    return NextResponse.json({ success: true, image }, { status: 201 });
   } catch (error) {
     console.error("[IMAGE_UPLOAD_ERROR]", error);
     return NextResponse.json(

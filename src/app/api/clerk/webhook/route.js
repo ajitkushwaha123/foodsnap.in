@@ -49,7 +49,7 @@ export async function POST(req) {
             name: data.first_name || "",
             profileImage: data.image_url || "",
             plan: "free",
-            credits: 10,
+            credits: 1000,
             subscription: {
               isActive: true,
               plan: "free",

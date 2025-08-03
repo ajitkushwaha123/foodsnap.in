@@ -4,16 +4,17 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, ArrowUpRight, AlertTriangle } from "lucide-react";
+import { Sparkles, ArrowUpRight, AlertTriangle, Menu } from "lucide-react";
 import UserSection from "../user/userButton";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import StatusBar from "@/components/notification";
+import { UserButton } from "@clerk/nextjs";
 
-export default function DashboardHeader({ title }) {
+export default function DashboardHeader({ title, toggleSidebar }) {
   const router = useRouter();
   const [subscription, setSubscription] = useState(null);
-  const [credits, setCredits] = useState(0);
+  const [credits, setCredits] = useState(10);
 
   const getSubscription = async () => {
     try {
@@ -66,17 +67,19 @@ export default function DashboardHeader({ title }) {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full px-6 py-3 flex items-center justify-between border-b border-muted bg-white/50 dark:bg-zinc-900/30 backdrop-blur-md sticky top-0 z-50"
+        className="w-full px-6 py-3 flex items-center justify-between border-b border-muted bg-white/50 dark:bg-zinc-900/30 backdrop-blur-md sticky top-0"
       >
         <div className="flex items-center gap-3 text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
-          <Sparkles className="text-yellow-500 animate-pulse w-5 h-5" />
+          <div className="md:hidden">
+            <Menu onClick={toggleSidebar} />
+          </div>
           <span>{title}</span>
           {renderSubscriptionBadge()}
         </div>
 
         <div className="flex items-center gap-4">
           {subscription &&
-            (!subscription.isActive || subscription.plan === "Free") && (
+            (!subscription.isActive || subscription.plan === "free") && (
               <Button
                 onClick={() => router.push("/pricing")}
                 className="bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold shadow-md hover:scale-105 hover:brightness-110 transition-all flex items-center gap-2"
@@ -85,7 +88,12 @@ export default function DashboardHeader({ title }) {
                 Upgrade Plan
               </Button>
             )}
-          <UserSection />
+          <div className="hidden md:block">
+            <UserSection />
+          </div>
+          <div className="md:hidden">
+            <UserButton />
+          </div>
         </div>
       </motion.div>
 
