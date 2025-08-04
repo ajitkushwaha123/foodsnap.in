@@ -20,7 +20,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-      <html lang="en" className="dark" suppressHydrationWarning>
+      <html lang="en" suppressHydrationWarning>
         <ClerkProvider>
           <body className={`${poppins.variable} font-poppins antialiased`}>
             <AppShell>{children}</AppShell>

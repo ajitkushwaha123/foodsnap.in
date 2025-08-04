@@ -19,7 +19,7 @@ export default function Page({ children }) {
     <div className="relative min-h-screen bg-white dark:bg-[#0a0a1a]">
       <Sidebar navItems={navItems} />
 
-      <main className="ml-64 relative z-10 overflow-y-auto h-screen">
+      <main className="ml-72 relative z-10 overflow-y-auto h-screen">
         <DashboardHeader title="Photo Library" credits={42} />
         <motion.div
           initial={{ opacity: 0, y: 60 }}

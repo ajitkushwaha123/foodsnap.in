@@ -31,7 +31,7 @@ export default function AppShell({ children }) {
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize(); 
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -44,9 +44,17 @@ export default function AppShell({ children }) {
     "/library",
     "/admin",
     "/pricing",
+    "/payment",
   ].some((path) => pathname.startsWith(path));
 
-  const isHeaderVisible = isSidebarVisible; 
+  const isHeaderVisible =
+    ![
+      "/sign-in",
+      "/sign-up",
+      "/library",
+      "/admin",
+      "/pricing",
+    ].some((path) => pathname.startsWith(path)) && !isMobile;
 
   const pageTitle = getPageTitle(pathname);
   const dummyCredits = 120;
@@ -54,7 +62,6 @@ export default function AppShell({ children }) {
   return (
     <Provider store={store}>
       <div className="min-h-screen flex bg-white dark:bg-[#0a0a1a] transition-colors duration-300 ease-in-out relative">
-
         {isSidebarVisible && !isMobile && <Sidebar navItems={navItems} />}
 
         <AnimatePresence>
@@ -89,7 +96,7 @@ export default function AppShell({ children }) {
             <DashboardHeader
               title={pageTitle}
               credits={dummyCredits}
-              toggleSidebar={toggleSidebar} 
+              toggleSidebar={toggleSidebar}
             />
           )}
           {children}

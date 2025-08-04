@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const plans = {
   monthly: [
@@ -11,6 +12,7 @@ const plans = {
       price: "Free",
       features: ["View sample food photos", "Limited access"],
       button: "Get Started",
+      key: "basic-monthly",
     },
     {
       name: "Premium",
@@ -27,6 +29,7 @@ const plans = {
       ],
       button: "Go Premium",
       highlight: true,
+      key: "premium-monthly",
     },
     {
       name: "Pro",
@@ -45,6 +48,7 @@ const plans = {
       ],
       button: "Upgrade to Pro",
       highlight: true,
+      key: "pro-monthly",
     },
   ],
   yearly: [
@@ -71,6 +75,7 @@ const plans = {
       ],
       button: "Go Premium",
       highlight: true,
+      key: "premium-yearly",
     },
     {
       name: "Pro",
@@ -89,12 +94,14 @@ const plans = {
       ],
       button: "Upgrade to Pro",
       highlight: true,
+      key: "pro-yearly",
     },
   ],
 };
 
 export default function PricingSection() {
   const [billing, setBilling] = useState("monthly");
+  const router = useRouter();
 
   return (
     <section id="pricing" className="px-4 py-12 text-white text-center">
@@ -161,6 +168,7 @@ export default function PricingSection() {
             </ul>
 
             <button
+              onClick={() => router.push(`/payment/cart?plan=${plan.key}`)}
               className={`w-full py-2 rounded-lg font-medium flex items-center justify-center gap-2 transition-all ${
                 plan.highlight
                   ? "bg-white text-black hover:bg-gray-200"

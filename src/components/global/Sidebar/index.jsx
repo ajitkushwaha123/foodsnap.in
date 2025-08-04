@@ -15,7 +15,7 @@ export default function Sidebar({ navItems = [] }) {
       className="w-72 h-screen fixed top-0 left-0 z-100
      border-r border-neutral-200 dark:border-neutral-700 bg-white dark:bg-[#10101a] shadow-lg dark:shadow-black/20 transition-colors flex flex-col"
     >
-      <div className="flex items-center justify-center px-4 py-6 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex items-center px-4 py-6 border-b border-zinc-200 dark:border-zinc-800">
         <h1 className="text-2xl font-extrabold tracking-tight text-black dark:text-white">
           FoodSnap<span className="text-green-500">.in</span>
         </h1>

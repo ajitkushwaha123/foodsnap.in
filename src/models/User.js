@@ -2,15 +2,10 @@ import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema(
   {
-    clerkId: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
-    name: { type: String },
-    profileImage: { type: String },
-
-    plan: {
+    phone: { type: String, required: true, unique: true },
+    password: {
       type: String,
-      enum: ["free", "premium", "pro"],
-      default: "free",
+      required: true,
     },
 
     credits: {
@@ -18,15 +13,16 @@ const UserSchema = new mongoose.Schema(
       default: 10,
     },
 
+    isAdmin: { type: Boolean, default: false },
+
     subscription: {
       isActive: { type: Boolean, default: false },
       expiresAt: { type: Date },
-      plan: { type: String, enum: ["free", "premium", "pro"], default: "free" },
+      plan: { type: String, default: "free" },
     },
 
     totalSearches: { type: Number, default: 0 },
     totalImagesDownloaded: { type: Number, default: 0 },
-    lastActiveAt: { type: Date },
   },
   { timestamps: true }
 );

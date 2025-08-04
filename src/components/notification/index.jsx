@@ -26,6 +26,7 @@ const variantStyles = {
 const StatusBar = ({
   message,
   icon,
+  showButton = true,
   redirectPath = "/pricing",
   buttonText = "Go Now",
   variant = "error",
@@ -38,18 +39,21 @@ const StatusBar = ({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className={`w-full ${styles.bg} ${styles.text} px-6 py-3 flex items-center justify-between shadow-md`}
+      className={`w-full ${styles.bg} rounded-md ${styles.text} px-6 py-3 flex items-center justify-between shadow-md`}
     >
       <div className="flex items-center gap-2 text-sm font-medium">
         {icon}
         {message}
       </div>
-      <Button
-        onClick={() => router.push(redirectPath)}
-        className={`${styles.button} text-white transition-all hover:scale-105`}
-      >
-        {buttonText}
-      </Button>
+      {showButton && (
+        <Button
+          variant="outline"
+          className={`text-sm ${styles.button} text-white`}
+          onClick={() => router.push(redirectPath)}
+        >
+          {buttonText}
+        </Button>
+      )}
     </motion.div>
   );
 };
