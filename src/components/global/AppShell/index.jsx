@@ -48,13 +48,9 @@ export default function AppShell({ children }) {
   ].some((path) => pathname.startsWith(path));
 
   const isHeaderVisible =
-    ![
-      "/sign-in",
-      "/sign-up",
-      "/library",
-      "/admin",
-      "/pricing",
-    ].some((path) => pathname.startsWith(path)) && !isMobile;
+    !["/sign-in", "/sign-up", "/library", "/admin", "/pricing"].some((path) =>
+      pathname.startsWith(path)
+    ) && !isMobile;
 
   const pageTitle = getPageTitle(pathname);
   const dummyCredits = 120;
@@ -88,9 +84,7 @@ export default function AppShell({ children }) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className={`flex-1 transition-all ${
-            isSidebarVisible && !isMobile ? "ml-72" : ""
-          }`}
+          className={`flex-1 transition-all`}
         >
           {isHeaderVisible && (
             <DashboardHeader

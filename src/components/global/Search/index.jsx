@@ -12,7 +12,7 @@ const SearchBar = ({ onSearch }) => {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-full px-3 md:px-4">
-      <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-4 py-2 shadow-md transition-all focus-within:ring-1 ring-green-500">
+      <div className="flex items-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-4 py-2 shadow-md transition-all focus-within:ring-1 ring-[#0025cc]">
         <Search className="text-gray-400 mr-2" size={20} />
         <input
           type="text"
@@ -23,7 +23,7 @@ const SearchBar = ({ onSearch }) => {
         />
         <button
           type="submit"
-          className="ml-2 bg-green-600 text-white px-4 py-1.5 text-sm rounded-md hover:bg-green-700 transition"
+          className="ml-2 bg-[#0025cc] hover:bg-[#1c3eff]s text-white px-4 py-1.5 text-sm rounded-md  transition"
         >
           Search
         </button>

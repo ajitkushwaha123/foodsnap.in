@@ -2,7 +2,8 @@ import User from "@/models/User";
 
 export const updateCredits = async (userId, amount) => {
   try {
-    const user = await User.findOne({ clerkId: userId });
+    const user = await User.findById(userId);
+
     if (!user) {
       return { success: false, message: "User not found" };
     }
@@ -15,7 +16,6 @@ export const updateCredits = async (userId, amount) => {
 
     if (user.credits === 0) {
       user.subscription.isActive = false;
-      user.subscription.expiresAt = new Date();
     }
 
     await user.save();

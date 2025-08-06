@@ -1,113 +1,126 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles, ArrowUpRight, AlertTriangle, Menu } from "lucide-react";
-import UserSection from "../user/userButton";
+import {
+  BadgeCheck,
+  Crown,
+  Phone,
+  Search,
+  Download,
+  Zap,
+  ArrowUpRight,
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
-import StatusBar from "@/components/notification";
-import { UserButton } from "@clerk/nextjs";
+import { useUser } from "@/store/hooks/useUser";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function DashboardHeader({ title, toggleSidebar }) {
+export default function DashboardHeader() {
+  const { user, loading, error, fetchUser } = useUser();
+
   const router = useRouter();
-  const [subscription, setSubscription] = useState(null);
-  const [credits, setCredits] = useState(10);
-
-  const getSubscription = async () => {
-    try {
-      const res = await axios.get("/api/user/subscription");
-      setSubscription(res.data.subscription);
-    } catch (err) {
-      console.error("Subscription fetch error:", err);
-    }
-  };
-
-  const getCredits = async () => {
-    try {
-      const res = await axios.get("/api/user/credits");
-      setCredits(res.data.credits);
-    } catch (err) {
-      console.error("Credits fetch error:", err);
-      setCredits(0);
-    }
-  };
 
   useEffect(() => {
-    getSubscription();
-    getCredits();
+    fetchUser();
   }, []);
 
-  const renderSubscriptionBadge = () => {
-    if (!subscription) return null;
+  if (loading) return null;
+  if (!user) return null;
 
-    const { plan, isActive } = subscription;
-    const isFree = plan === "free";
+  const {
+    phone,
+    credits,
+    isAdmin,
+    subscription = {},
+    totalSearches,
+    totalImagesDownloaded,
+  } = user;
 
-    return (
-      <Badge
-        className={`ml-2 text-xs ${
-          !isActive
-            ? "bg-zinc-500/60 line-through"
-            : isFree
-            ? "bg-yellow-500/80 text-black"
-            : "bg-blue-600/90 text-white"
-        }`}
-      >
-        {plan} {!isActive && "(Inactive)"}
-      </Badge>
-    );
-  };
+  const isSubscribed = subscription?.isActive;
+  const plan = subscription?.plan || "free";
+  const expiresAt = subscription?.expiresAt
+    ? new Date(subscription.expiresAt).toLocaleDateString()
+    : "N/A";
+
+  const showUpgrade = !isSubscribed || plan === "free";
 
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full px-6 py-3 flex items-center justify-between border-b border-muted bg-white/50 dark:bg-zinc-900/30 backdrop-blur-md sticky top-0"
-      >
-        <div className="flex items-center gap-3 text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
-          <div className="md:hidden">
-            <Menu onClick={toggleSidebar} />
-          </div>
-          <span>{title}</span>
-          {renderSubscriptionBadge()}
-        </div>
-
-        <div className="flex items-center gap-4">
-          {subscription &&
-            (!subscription.isActive || subscription.plan === "free") && (
-              <Button
-                onClick={() => router.push("/pricing")}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold shadow-md hover:scale-105 hover:brightness-110 transition-all flex items-center gap-2"
-              >
-                <ArrowUpRight className="w-4 h-4 animate-bounce" />
-                Upgrade Plan
-              </Button>
+    <Card className="w-full px-6 py-5 mb-6 rounded-xl bg-white dark:bg-gray-900 shadow-sm border">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* User Info */}
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            Welcome, <Phone size={18} className="text-gray-500" />{" "}
+            {phone || "-"}
+            {isAdmin && (
+              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                <Crown size={12} className="mr-1" />
+                Admin
+              </span>
             )}
-          <div className="hidden md:block">
-            <UserSection />
-          </div>
-          <div className="md:hidden">
-            <UserButton />
-          </div>
-        </div>
-      </motion.div>
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Plan:{" "}
+            <span className="capitalize font-medium text-gray-700 dark:text-white">
+              {plan}
+            </span>{" "}
+            {isSubscribed ? (
+              <span className="text-green-600 ml-2 inline-flex items-center gap-1">
+                <BadgeCheck size={14} /> Active
+              </span>
+            ) : (
+              <span className="text-red-500 ml-2">Expired</span>
+            )}
+            {plan !== "free" && isSubscribed && (
+              <span className="text-xs text-gray-400 ml-3">
+                (expires on {expiresAt})
+              </span>
+            )}
+          </p>
 
-      {credits === 0 && (
-        <StatusBar
-          message="You’ve run out of credits!"
-          icon={
-            <AlertTriangle className="h-5 w-5 animate-pulse text-red-600 dark:text-red-300" />
-          }
-          redirectPath="/pricing"
-          buttonText="Upgrade Now"
-          variant="error"
-        />
-      )}
-    </>
+          {showUpgrade && (
+            <Button
+              size="sm"
+              className="mt-3 bg-[#0025cc] hover:bg-[#1c3eff] text-white text-xs font-medium"
+              onClick={() => router.push("/pricing")}
+            >
+              <ArrowUpRight size={14} className="mr-1" />
+              Upgrade Plan
+            </Button>
+          )}
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full sm:w-auto">
+          <StatItem icon={<Zap size={16} />} label="Credits" value={credits} />
+          <StatItem
+            icon={<Search size={16} />}
+            label="Searches"
+            value={totalSearches}
+          />
+          <StatItem
+            icon={<Download size={16} />}
+            label="Downloads"
+            value={totalImagesDownloaded}
+          />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function StatItem({ icon, label, value }) {
+  return (
+    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm flex items-center gap-3">
+      <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
+        {icon}
+      </div>
+      <div>
+        <div className="text-sm text-gray-500 dark:text-gray-400">{label}</div>
+        <div className="font-semibold text-gray-900 dark:text-white">
+          {value}
+        </div>
+      </div>
+    </div>
   );
 }

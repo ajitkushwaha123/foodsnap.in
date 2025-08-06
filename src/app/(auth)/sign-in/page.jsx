@@ -20,10 +20,10 @@ const Divider = ({ title }) => (
   </div>
 );
 
-export default function Page() {
+export default function page() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { register, loading, error } = useUser();
+  const { login, loading, error } = useUser();
 
   const formik = useFormik({
     initialValues: {
@@ -40,10 +40,10 @@ export default function Page() {
     }),
     onSubmit: async (values) => {
       try {
-        await register(values); // ✅ Call the actual register function
-        router.push("/"); // Redirect if successful
+        await login(values); 
+        router.push("/");
       } catch (err) {
-        console.error("Registration error:", err);
+        console.error("Login error:", err);
       }
     },
   });
@@ -60,6 +60,8 @@ export default function Page() {
         </div>
         <CardContent className="px-6 pb-8 pt-4">
           <form onSubmit={formik.handleSubmit} className="space-y-5">
+            <h2 className="text-xl font-semibold text-center">Sign In</h2>
+
             {/* Phone */}
             <div>
               <Label htmlFor="phone">Phone Number</Label>
@@ -118,7 +120,7 @@ export default function Page() {
               )}
             </div>
 
-            {/* Server or API Error */}
+            {/* Error */}
             {error && (
               <div className="bg-red-100 dark:bg-red-500/10 border border-red-400 text-red-700 dark:text-red-300 p-3 rounded text-sm">
                 {error}
@@ -134,22 +136,22 @@ export default function Page() {
               {loading ? (
                 <span className="flex items-center gap-2 justify-center">
                   <Loader2 className="animate-spin w-4 h-4" />
-                  Registering...
+                  Signing in...
                 </span>
               ) : (
-                "Register"
+                "Sign In"
               )}
             </Button>
 
             <Divider title="OR" />
 
             <p className="text-sm text-center text-muted-foreground mt-2">
-              Already have an account?{" "}
+              Don’t have an account?{" "}
               <a
-                href="/login"
+                href="/register"
                 className="text-[#0025cc] dark:text-indigo-400 hover:underline"
               >
-                Login
+                Register
               </a>
             </p>
           </form>
