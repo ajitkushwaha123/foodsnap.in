@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/store/hooks/useUser";
+import Alert from "@/components/global/alert";
 
 const Divider = ({ title }) => (
   <div className="flex items-center gap-2 my-4">
@@ -20,10 +21,10 @@ const Divider = ({ title }) => (
   </div>
 );
 
-export default function page() {
+export default function Page() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { login, loading, error } = useUser();
+  const { login, loading, error: apiError } = useUser();
 
   const formik = useFormik({
     initialValues: {
@@ -32,15 +33,15 @@ export default function page() {
     },
     validationSchema: Yup.object({
       phone: Yup.string()
-        .matches(/^[6-9]\d{9}$/, "Enter a valid phone number")
-        .required("Phone number is required"),
+        .required("Phone number is required")
+        .matches(/^[6-9]\d{9}$/, "Enter a valid phone number"),
       password: Yup.string()
-        .min(6, "Password must be at least 6 characters")
-        .required("Password is required"),
+        .required("Password is required")
+        .min(6, "Password must be at least 6 characters"),
     }),
     onSubmit: async (values) => {
       try {
-        await login(values); 
+        await login(values);
         router.push("/");
       } catch (err) {
         console.error("Login error:", err);
@@ -48,9 +49,14 @@ export default function page() {
     },
   });
 
+  const firstError =
+    formik.submitCount > 0 && Object.keys(formik.errors).length > 0
+      ? Object.values(formik.errors)[0]
+      : apiError || null;
+
   return (
-    <div className="flex items-center justify-center  px-4 bg-gray-100 dark:bg-gray-900 transition-colors">
-      <Card className="w-full max-w-md border rounded-md shadow-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-gray-100 dark:bg-gray-900 transition-colors">
+      <Card className="w-full py-0 max-w-md border rounded-md shadow-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
         <div className="relative">
           <img
             src="/logo.png"
@@ -60,12 +66,9 @@ export default function page() {
         </div>
         <CardContent className="px-6 pb-8 pt-4">
           <form onSubmit={formik.handleSubmit} className="space-y-5">
-            <h2 className="text-xl font-semibold text-center">Sign In</h2>
-
-            {/* Phone */}
             <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative mt-1">
+              <Label htmlFor="phone">Phone</Label>
+              <div className="relative mt-2">
                 <Phone
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   size={18}
@@ -76,21 +79,16 @@ export default function page() {
                   placeholder="9876543210"
                   type="tel"
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   value={formik.values.phone}
                   className="pl-10 h-12"
                 />
               </div>
-              {formik.touched.phone && formik.errors.phone && (
-                <p className="text-sm text-red-500 mt-1">
-                  {formik.errors.phone}
-                </p>
-              )}
             </div>
 
-            {/* Password */}
             <div>
               <Label htmlFor="password">Password</Label>
-              <div className="relative mt-1">
+              <div className="relative mt-2">
                 <Lock
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   size={18}
@@ -101,6 +99,7 @@ export default function page() {
                   placeholder="••••••••"
                   type={showPassword ? "text" : "password"}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   value={formik.values.password}
                   className="pl-10 pr-10 h-12"
                 />
@@ -113,21 +112,17 @@ export default function page() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {formik.touched.password && formik.errors.password && (
-                <p className="text-sm text-red-500 mt-1">
-                  {formik.errors.password}
-                </p>
-              )}
             </div>
 
-            {/* Error */}
-            {error && (
-              <div className="bg-red-100 dark:bg-red-500/10 border border-red-400 text-red-700 dark:text-red-300 p-3 rounded text-sm">
-                {error}
-              </div>
+            {firstError && (
+              <Alert
+                showButton={false}
+                type="error"
+                message={firstError}
+                className="mt-2"
+              />
             )}
 
-            {/* Submit */}
             <Button
               type="submit"
               disabled={loading}
@@ -136,10 +131,10 @@ export default function page() {
               {loading ? (
                 <span className="flex items-center gap-2 justify-center">
                   <Loader2 className="animate-spin w-4 h-4" />
-                  Signing in...
+                  Loading
                 </span>
               ) : (
-                "Sign In"
+                "LOGIN"
               )}
             </Button>
 
@@ -148,7 +143,7 @@ export default function page() {
             <p className="text-sm text-center text-muted-foreground mt-2">
               Don’t have an account?{" "}
               <a
-                href="/register"
+                href="/sign-up"
                 className="text-[#0025cc] dark:text-indigo-400 hover:underline"
               >
                 Register

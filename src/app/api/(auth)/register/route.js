@@ -14,7 +14,7 @@ export const POST = async (req) => {
 
     if (!phone || !password) {
       return NextResponse.json(
-        { success: false, error: "Phone and password are required." },
+        { success: false, message: "Phone and password are required." },
         { status: 400 }
       );
     }
@@ -22,8 +22,8 @@ export const POST = async (req) => {
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
       return NextResponse.json(
-        { success: false, error: "User already exists." },
-        { status: 400 }
+        { success: false, message: "User already exists." },
+        { status: 409 }
       );
     }
 
@@ -32,7 +32,7 @@ export const POST = async (req) => {
     const newUser = new User({
       phone,
       password: hashedPassword,
-      credits: 10,
+      credits: 50,
       isAdmin: false,
       subscription: {
         isActive: true,
@@ -63,11 +63,10 @@ export const POST = async (req) => {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Registration error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Something went wrong.",
+        message: error.message || "Something went wrong...",
       },
       { status: 500 }
     );

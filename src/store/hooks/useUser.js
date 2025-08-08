@@ -16,12 +16,12 @@ export const useUser = () => {
     (state) => state.user
   );
 
-  const register = (userData) => dispatch(registerUser(userData));
-  const login = (credentials) => dispatch(loginUser(credentials));
-  const logout = () => dispatch(logoutUser());
-  const fetchUser = () => dispatch(loadUser());
-  const clearUserError = () => dispatch(clearError());
-  const reset = () => dispatch(resetUser());
+  const register = (userData) => dispatch(registerUser(userData)).unwrap();
+  const login = (credentials) => dispatch(loginUser(credentials)).unwrap();
+  const logout = () => dispatch(logoutUser()).unwrap();
+  const fetchUser = () => dispatch(loadUser()).unwrap();
+  const clearUserError = () => dispatch(clearError()).unwrap();
+  const reset = () => dispatch(resetUser()).unwrap();
 
   return {
     user,

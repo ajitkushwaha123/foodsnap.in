@@ -1,15 +1,13 @@
 "use client";
 
-import {
-  LogOut,
-  ArrowUpRight,
-  BadgeQuestionMark,
-} from "lucide-react";
+import { useState } from "react";
+import { LogOut, ArrowUpRight, BadgeQuestionMark } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { FaServicestack } from "react-icons/fa";
 import { useUser } from "@/store/hooks/useUser";
+import { toast } from "react-hot-toast";
 
 const tabs = [
   {
@@ -31,7 +29,24 @@ const tabs = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { logout, loading } = useUser();
+
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await logout();
+      toast.success("Logged out successfully");
+      router.push("/sign-in");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout. Please try again.");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <aside className="h-screen w-64 bg-white dark:bg-gray-900 border-r dark:border-gray-800 p-6 flex flex-col justify-between shadow-sm">
@@ -70,12 +85,13 @@ export default function Sidebar() {
       </div>
 
       <button
-        onClick={logout}
-        disabled={loading}
+        onClick={handleLogout}
+        disabled={loading || isLoggingOut}
+        aria-label="Logout"
         className="flex h-10 items-center gap-3 px-4 py-2 text-sm text-white bg-red-500 hover:bg-red-600 dark:hover:bg-red-800 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <LogOut size={18} />
-        Logout
+        {loading || isLoggingOut ? "Logging out..." : "Logout"}
       </button>
     </aside>
   );

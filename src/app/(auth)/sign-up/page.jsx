@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/store/hooks/useUser";
+import Alert from "@/components/global/alert";
 
 const Divider = ({ title }) => (
   <div className="flex items-center gap-2 my-4">
@@ -23,7 +24,7 @@ const Divider = ({ title }) => (
 export default function Page() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { register, loading, error } = useUser();
+  const { register, loading, error: apiError } = useUser();
 
   const formik = useFormik({
     initialValues: {
@@ -32,25 +33,30 @@ export default function Page() {
     },
     validationSchema: Yup.object({
       phone: Yup.string()
-        .matches(/^[6-9]\d{9}$/, "Enter a valid phone number")
-        .required("Phone number is required"),
+        .required("Phone number is required")
+        .matches(/^[0-9]{10}$/, "Enter a valid 10-digit phone number"),
       password: Yup.string()
-        .min(6, "Password must be at least 6 characters")
-        .required("Password is required"),
+        .required("Password is required")
+        .min(6, "Password must be at least 6 characters"),
     }),
     onSubmit: async (values) => {
       try {
-        await register(values); // ✅ Call the actual register function
-        router.push("/"); // Redirect if successful
+        await register(values);
+        router.push("/");
       } catch (err) {
         console.error("Registration error:", err);
       }
     },
   });
 
+  const firstError =
+    formik.submitCount > 0 && Object.keys(formik.errors).length > 0
+      ? Object.values(formik.errors)[0]
+      : apiError || null;
+
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gray-100 dark:bg-gray-900 transition-colors">
-      <Card className="w-full py-0 max-w-md border rounded-md shadow-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-gray-100 dark:bg-gray-900">
+      <Card className="w-full max-w-md py-0 border rounded-md shadow-lg bg-white dark:bg-gray-800">
         <div className="relative">
           <img
             src="/logo.png"
@@ -60,7 +66,6 @@ export default function Page() {
         </div>
         <CardContent className="px-6 pb-8 pt-4">
           <form onSubmit={formik.handleSubmit} className="space-y-5">
-            {/* Phone */}
             <div>
               <Label htmlFor="phone">Phone Number</Label>
               <div className="relative mt-1">
@@ -78,14 +83,8 @@ export default function Page() {
                   className="pl-10 h-12"
                 />
               </div>
-              {formik.touched.phone && formik.errors.phone && (
-                <p className="text-sm text-red-500 mt-1">
-                  {formik.errors.phone}
-                </p>
-              )}
             </div>
 
-            {/* Password */}
             <div>
               <Label htmlFor="password">Password</Label>
               <div className="relative mt-1">
@@ -106,26 +105,21 @@ export default function Page() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300"
-                  aria-label="Toggle Password Visibility"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {formik.touched.password && formik.errors.password && (
-                <p className="text-sm text-red-500 mt-1">
-                  {formik.errors.password}
-                </p>
-              )}
             </div>
 
-            {/* Server or API Error */}
-            {error && (
-              <div className="bg-red-100 dark:bg-red-500/10 border border-red-400 text-red-700 dark:text-red-300 p-3 rounded text-sm">
-                {error}
-              </div>
+            {firstError && (
+              <Alert
+                showButton={false}
+                type="error"
+                message={firstError}
+                className="mt-2"
+              />
             )}
 
-            {/* Submit */}
             <Button
               type="submit"
               disabled={loading}
@@ -134,10 +128,10 @@ export default function Page() {
               {loading ? (
                 <span className="flex items-center gap-2 justify-center">
                   <Loader2 className="animate-spin w-4 h-4" />
-                  Registering...
+                  Loading
                 </span>
               ) : (
-                "Register"
+                "REGISTER"
               )}
             </Button>
 
@@ -146,7 +140,7 @@ export default function Page() {
             <p className="text-sm text-center text-muted-foreground mt-2">
               Already have an account?{" "}
               <a
-                href="/login"
+                href="/sign-in"
                 className="text-[#0025cc] dark:text-indigo-400 hover:underline"
               >
                 Login

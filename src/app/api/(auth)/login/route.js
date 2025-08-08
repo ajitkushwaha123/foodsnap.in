@@ -20,7 +20,7 @@ export const POST = async (req) => {
     const user = await User.findOne({ phone });
     if (!user) {
       return NextResponse.json(
-        { success: false, message: "User not found" },
+        { success: false, message: "User not found ! Register Now" },
         { status: 404 }
       );
     }
