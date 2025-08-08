@@ -13,3 +13,11 @@ export const signToken = (user) => {
     { expiresIn: "7d" }
   );
 };
+
+export const verifyJwtToken = (token) => {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return null;
+  }
+};
