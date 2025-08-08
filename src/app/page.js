@@ -1,121 +1,103 @@
-"use client";
+import Image from "next/image";
 
-import React, { useEffect, useRef, useState } from "react";
-import { search, latest } from "@/helpers/api/search";
-import SearchBar from "@/components/global/Search";
-import InsufficientCredits from "@/components/global/user/InsufficientCredits";
-import Card from "@/components/global/Photo/Card";
-
-const Spinner = () => (
-  <div className="flex justify-center items-center py-10">
-    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-  </div>
-);
-
-const Page = () => {
-  const [query, setQuery] = useState("");
-  const [data, setData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(true); // start true to allow first scroll
-  const [loading, setLoading] = useState(false);
-  const [creditsError, setCreditsError] = useState(false);
-
-  const observerRef = useRef(null);
-
-  const fetchData = async ({ q, page }) => {
-    setLoading(true);
-    try {
-      const res = q ? await search({ query: q, page }) : await latest({ page });
-
-      if (page === 1) {
-        setData(res.results || []);
-      } else {
-        setData((prev) => [...prev, ...(res.results || [])]);
-      }
-
-      // Default to true if API doesn't send hasNextPage
-      setHasNextPage(res.hasNextPage ?? res.results?.length > 0);
-    } catch (err) {
-      if (err?.response?.status === 402) {
-        setCreditsError(true);
-        return;
-      }
-      console.error("Fetch failed", err);
-      if (page === 1) setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = async (q) => {
-    setQuery(q);
-    setPage(1);
-    setCreditsError(false);
-    await fetchData({ q, page: 1 });
-  };
-
-  // Initial load (latest)
-  useEffect(() => {
-    fetchData({ q: "", page: 1 });
-  }, []);
-
-  // Infinite scroll observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loading && hasNextPage) {
-          setPage((prev) => prev + 1);
-        }
-      },
-      { threshold: 1.0 }
-    );
-
-    const current = observerRef.current;
-    if (current) observer.observe(current);
-
-    return () => {
-      if (current) observer.unobserve(current);
-    };
-  }, [loading, hasNextPage]);
-
-  useEffect(() => {
-    if (page > 1) {
-      fetchData({ q: query, page });
-    }
-  }, [page]);
-
+export default function Home() {
   return (
-    <div className="bg-white dark:bg-[#0a0a1a] text-black dark:text-white px-2 md:px-4 py-8 transition-colors duration-300">
-      <div className="w-full">
-        <div className="flex w-full justify-center items-center">
-          <SearchBar onSearch={handleSearch} />
-        </div>
+    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+        <Image
+          className="dark:invert"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={180}
+          height={38}
+          priority
+        />
+        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
+          <li className="mb-2 tracking-[-.01em]">
+            Get started by editing{" "}
+            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
+              src/app/page.js
+            </code>
+            .
+          </li>
+          <li className="tracking-[-.01em]">
+            Save and see your changes instantly.
+          </li>
+        </ol>
 
-        <div className="mt-10">
-          {creditsError ? (
-            <InsufficientCredits />
-          ) : loading && page === 1 ? (
-            <Spinner />
-          ) : data.length === 0 && query ? (
-            <p className="text-center text-zinc-500 dark:text-zinc-400 mt-20 text-sm">
-              No images found. Try searching a food item or dish.
-            </p>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-2">
-                {data.map((image, i) => (
-                  <Card key={image._id || i} image={image} index={i} />
-                ))}
-              </div>
-
-              {loading && page > 1 && <Spinner />}
-              <div ref={observerRef} className="h-10" />
-            </>
-          )}
+        <div className="flex gap-4 items-center flex-col sm:flex-row">
+          <a
+            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              className="dark:invert"
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={20}
+              height={20}
+            />
+            Deploy now
+          </a>
+          <a
+            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Read our docs
+          </a>
         </div>
-      </div>
+      </main>
+      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/file.svg"
+            alt="File icon"
+            width={16}
+            height={16}
+          />
+          Learn
+        </a>
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/window.svg"
+            alt="Window icon"
+            width={16}
+            height={16}
+          />
+          Examples
+        </a>
+        <a
+          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            aria-hidden
+            src="/globe.svg"
+            alt="Globe icon"
+            width={16}
+            height={16}
+          />
+          Go to nextjs.org →
+        </a>
+      </footer>
     </div>
   );
-};
-
-export default Page;
+}
