@@ -55,16 +55,17 @@ export default function Page() {
       : apiError || null;
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gray-100 dark:bg-gray-900 transition-colors">
+    <div className="flex items-center justify-center min-h-screen px-2 md:px-4 bg-gray-100 dark:bg-gray-900 transition-colors">
       <Card className="w-full py-0 max-w-md border rounded-md shadow-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
         <div className="relative">
           <img
             src="/logo.png"
             alt="Cover"
-            className="rounded-t-md w-full object-cover h-36"
+            className="rounded-t-md w-full object-cover"
           />
         </div>
-        <CardContent className="px-6 pb-8 pt-4">
+
+        <CardContent className=" px-4 md:px-6 pb-8 pt-4">
           <form onSubmit={formik.handleSubmit} className="space-y-5">
             <div>
               <Label htmlFor="phone">Phone</Label>
