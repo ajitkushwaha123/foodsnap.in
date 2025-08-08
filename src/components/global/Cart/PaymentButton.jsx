@@ -1,143 +1,96 @@
-import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
-import { load } from "@cashfreepayments/cashfree-js";
-import toast, { Toaster } from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+"use client";
 
-const PaymentButton = ({values}) => {
-  const [orderId, setOrderId] = useState("");
-  const apiUrl = import.meta.env.VITE_API_URL;
-  const environment = import.meta.env.VITE_ENVIRONMENT;
-  const [paymentTried , setPaymentTried] = useState(false); 
-  const [paymentData , setPaymentData] = useState(values);
-  
-  console.log("Payment Data:", paymentData);
+import { useState } from "react";
+import { createOrder, loadRazorpayScript, verifyPayment } from "@/lib/razorpay";
+import toast from "react-hot-toast";
+import { FaSpinner } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
-  const navigate = useNavigate();
-  const cashfree = useRef(null);
+const PaymentButton = ({
+  amount,
+  name,
+  email,
+  contact,
+  description = "Purchase from Foodsnap.in",
+  notes = {},
+}) => {
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  useEffect(() => {
-    const initialiseSdk = async () => {
-      try {
-        cashfree.current = await load({
-          mode: environment,
-        });
-        console.log("Cashfree SDK initialized");
-      } catch (error) {
-        console.error("Error initializing Cashfree SDK", error);
-      }
-    };
-
-    initialiseSdk();
-  }, [environment]);
-
-  const getSessionData = async (paymentData) => {
-    try {
-      console.log("Fetching session ID");
-      const res = await axios.post(`${apiUrl}/api/payment`  , paymentData);
-      console.log("Response:", res);
-
-      if (res.data && res.data.payment_session_id) {
-        setOrderId(res.data.order_id);
-        return res.data;
-      }
-    } catch (err) {
-      console.error("Error fetching session ID", err);
-    }
-  };
-
-  const handleClick = async (e) => {
-    e.preventDefault();
-
-    try {
-      const sessionPromise = getSessionData(paymentData);
-      toast.promise(sessionPromise, {
-        loading: "Initializing Payment ...",
-        success: "Payment Initialized ...",
-        error:
-          "Could not create payment session, refresh or contact support ...!",
-      });
-
-      const sessionData = await sessionPromise;
-
-      console.log("Session Data:", sessionData);
-      const sessionId = sessionData?.payment_session_id;
-
-      if (!sessionId) {
-        toast.error(
-          "Could not create payment session, refresh or contact support ...!"
-        );
-        return;
-      }
-
-      // Store orderId locally here to avoid relying on async setOrderId
-      const currentOrderId = sessionData?.order_id;
-
-      let checkoutOptions = {
-        paymentSessionId: sessionId,
-        redirectTarget: "_modal",
-      };
-
-      cashfree.current.checkout(checkoutOptions).then((result) => {
-        if (result.error) {
-          toast.error(
-            "User has closed the popup or there is some payment error. Check for Payment Status"
-          );
-          console.log(result.error);
-        }
-
-        if (result.redirect) {
-          toast("Payment will be redirected");
-        }
-
-        if (result.paymentDetails) {
-          toast.success(result.paymentDetails.paymentMessage);
-
-          if (!currentOrderId) {
-            toast.error(
-              setPaymentTried(true),
-              "Could not generate OrderId, refresh or contact support ...!"
-            );
-            return;
-          }
-
-          navigate("/payment-status/" + currentOrderId);
-        }
-      });
-    } catch (err) {
-      console.error("Error handling click", err);
-    }
-  };
-
-
-  const handlePaymentTried = async (e) => {
-    e.preventDefault();
-    if (!orderId) {
-      toast.error("Could not Generate OrderId, Refresh or Contact Support ...!");
+  const handlePayment = async () => {
+    if (!amount || !name || !email || !contact) {
+      toast.error("Missing required information.");
       return;
     }
-    navigate("/payment-status/" + orderId);
-  }
+
+    setLoading(true);
+
+    const isLoaded = await loadRazorpayScript();
+    if (!isLoaded) {
+      toast.error("Razorpay SDK failed to load.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const order = await createOrder(amount * 100);
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "Foodsnap",
+        description,
+        order_id: order.id,
+        notes,
+        handler: async (response) => {
+          const verification = await verifyPayment(response);
+          if (verification.status === "success") {
+            toast.success("Payment successful!");
+            window.location.href = `/`;
+          } else {
+            toast.error("Payment verification failed.");
+          }
+        },
+        prefill: {
+          name,
+          email,
+          contact,
+        },
+        theme: {
+          color: "#6366f1",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong!");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div>
-      <Toaster reverseOrder={false} position="top-center"></Toaster>
-      {paymentTried ? (
-        <button
-          onClick={(e) => handlePaymentTried(e)}
-          className="hover:bg-white font-poppins px-[20px] mt-[30px] text-white sm:text-[18px] border-2 border-white flex bg-primary border-primary hover:border-primary text-white hover:text-primary font-medium justify-center items-center sm:px-4 px-3 sm:py-2 py-3 rounded-md"
-        >
-          Check Payment Status
-        </button>
+    <button
+      onClick={handlePayment}
+      disabled={loading}
+      className={`px-6 py-3 text-white rounded flex items-center justify-center gap-2 ${
+        loading
+          ? "bg-gray-400 cursor-not-allowed"
+          : "bg-indigo-600 hover:bg-indigo-700"
+      }`}
+    >
+      {loading ? (
+        <>
+          <FaSpinner className="animate-spin" />
+          Processing...
+        </>
       ) : (
-        <button
-          onClick={(e) => handleClick(e)}
-          className="hover:bg-white font-poppins px-[20px] mt-[30px] text-white sm:text-[18px] border-2 border-white flex bg-primary border-primary hover:border-primary text-white hover:text-primary font-medium justify-center items-center sm:px-4 px-3 sm:py-2 py-3 rounded-md"
-        >
-          Pay Now
-        </button>
+        `Pay ₹${amount}`
       )}
-    </div>
+    </button>
   );
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { search } from "@/helpers/api/search";
+import { search, latest } from "@/helpers/api/search";
 import SearchBar from "@/components/global/Search";
 import InsufficientCredits from "@/components/global/user/InsufficientCredits";
 import Card from "@/components/global/Photo/Card";
@@ -16,28 +16,31 @@ const Page = () => {
   const [query, setQuery] = useState("");
   const [data, setData] = useState([]);
   const [page, setPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(false);
+  const [hasNextPage, setHasNextPage] = useState(true); // start true to allow first scroll
   const [loading, setLoading] = useState(false);
   const [creditsError, setCreditsError] = useState(false);
 
   const observerRef = useRef(null);
 
-  const fetchResults = async ({ query, page }) => {
+  const fetchData = async ({ q, page }) => {
     setLoading(true);
     try {
-      const res = await search({ query, page });
+      const res = q ? await search({ query: q, page }) : await latest({ page });
+
       if (page === 1) {
         setData(res.results || []);
       } else {
         setData((prev) => [...prev, ...(res.results || [])]);
       }
-      setHasNextPage(res.hasNextPage);
+
+      // Default to true if API doesn't send hasNextPage
+      setHasNextPage(res.hasNextPage ?? res.results?.length > 0);
     } catch (err) {
       if (err?.response?.status === 402) {
         setCreditsError(true);
         return;
       }
-      console.error("Search failed", err);
+      console.error("Fetch failed", err);
       if (page === 1) setData([]);
     } finally {
       setLoading(false);
@@ -45,20 +48,22 @@ const Page = () => {
   };
 
   const handleSearch = async (q) => {
-    if (!q) return;
     setQuery(q);
     setPage(1);
     setCreditsError(false);
-    await fetchResults({ query: q, page: 1 });
+    await fetchData({ q, page: 1 });
   };
 
-  // Load more when intersection observed
+  // Initial load (latest)
   useEffect(() => {
-    if (!hasNextPage || loading) return;
+    fetchData({ q: "", page: 1 });
+  }, []);
 
+  // Infinite scroll observer
+  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        if (entries[0].isIntersecting && !loading && hasNextPage) {
           setPage((prev) => prev + 1);
         }
       },
@@ -71,12 +76,11 @@ const Page = () => {
     return () => {
       if (current) observer.unobserve(current);
     };
-  }, [hasNextPage, loading]);
+  }, [loading, hasNextPage]);
 
-  // Fetch new page when page state changes
   useEffect(() => {
-    if (page !== 1) {
-      fetchResults({ query, page });
+    if (page > 1) {
+      fetchData({ q: query, page });
     }
   }, [page]);
 
@@ -105,8 +109,7 @@ const Page = () => {
               </div>
 
               {loading && page > 1 && <Spinner />}
-
-              {hasNextPage && <div ref={observerRef} className="h-10" />}
+              <div ref={observerRef} className="h-10" />
             </>
           )}
         </div>

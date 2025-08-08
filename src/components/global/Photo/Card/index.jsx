@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Download } from "lucide-react";
+import { Download, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 const Card = ({ image, index }) => {
@@ -22,7 +22,7 @@ const Card = ({ image, index }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl); // Clean up
+      URL.revokeObjectURL(blobUrl);
 
       toast.success("Image downloaded!");
     } catch (error) {
@@ -33,7 +33,6 @@ const Card = ({ image, index }) => {
     }
   };
 
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
@@ -43,12 +42,19 @@ const Card = ({ image, index }) => {
       className="relative rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 p-3 shadow-sm hover:shadow-lg transition-all flex flex-col gap-3"
     >
       <div className="relative">
+        {/* Zomato Approved Badge */}
+        <div className="absolute top-3 left-3 bg-red-600 text-white px-3 py-1 text-xs font-semibold rounded-sm shadow-md flex items-center gap-1">
+          <CheckCircle size={14} className="text-white" />
+          Zomato
+        </div>
+
         <img
           loading="lazy"
           src={image.image_url}
           alt={image.title || "Image"}
           className="w-full h-56 sm:h-64 object-cover rounded-lg border border-zinc-200 dark:border-white/10"
         />
+
         <button
           onClick={handleDownload}
           aria-label="Download image"

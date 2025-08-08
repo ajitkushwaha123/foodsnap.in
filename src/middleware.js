@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const protectedRoutes = ["/" , "/dashboard", "/account", "/settings"]; 
+const protectedRoutes = ["/", "/dashboard", "/account", "/settings"];
 
 export function middleware(request) {
   const token = request.cookies.get("token")?.value;
@@ -20,5 +20,11 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/account/:path*", "/settings/:path*"],
+  matcher: [
+    "/api/:path*",
+    "/",
+    "/dashboard/:path*",
+    "/account/:path*",
+    "/settings/:path*",
+  ],
 };

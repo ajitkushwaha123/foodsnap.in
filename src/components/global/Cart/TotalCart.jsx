@@ -1,188 +1,89 @@
-import React, { useState, useEffect } from "react";
-import PriceFormatter from "../../helper/PriceFormatter";
-import { getSubscriptionsBysubscriptionType } from "../../helper/helper";
-import { useParams } from "react-router-dom"; // Correct import for useParams
-import { loader } from "../../assets";
+import PriceFormatter from "@/helpers/maths/priceFormatter";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 
-const TotalCart = ({ finalCart }) => {
-  // Destructure finalCart from props
-  const { subscriptionType } = useParams();
-
-  const [cartData, setCartData] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-
-  const getSubsBySubscriptionType = async () => {
-    setIsLoading(true);
-    try {
-      const response = await getSubscriptionsBysubscriptionType(
-        subscriptionType
-      ); // Await the promise directly
-
-      console.log("API Response:", response?.data);
-      finalCartValue(
-        response?.data.price,
-        response?.data.discountPercentage,
-        response?.data.taxPercentage
-      );
-      setCartData(response?.data);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setIsLoading(false); // Ensure loading state is reset in both success and error cases
-    }
-  };
-
-  useEffect(() => {
-    getSubsBySubscriptionType();
-  }, [subscriptionType]);
-
-  const percentToAmount = (percent, amount) => {
-    return (percent * amount) / 100;
-  };
-
+const TotalCart = ({
+  amount,
+  discountedAmount,
+  planKey,
+  discountPercentage,
+  showButton = true,
+}) => {
+  const router = useRouter();
   const [showCoupon, setShowCoupon] = useState(false);
 
-  const finalCartValue = (price, discountPercentage, taxPercentage) => {
-    finalCart(
-      price -
-        percentToAmount(discountPercentage, price) +
-        percentToAmount(taxPercentage, price)
-    );
-  };
-
   return (
-    <div className="w-full shadow-lg font-poppins p-[28px] rounded-xl bg-white">
-      {isLoading ? (
-        <div> <img src={loader}/> </div>
-      ) : (
-        <div>
-          <h3 className="font-semibold text-[20px]">Order Summary</h3>
-
-          <p className="text-[22px] mt-[18px] font-semibold">
-            {cartData?.name}
+    <div className="rounded-2xl lg:ml-8 shadow-lg bg-white dark:bg-gray-900 p-6 border border-gray-200 dark:border-gray-800 space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Subtotal
+        </h3>
+        <div className="text-right">
+          <s className="text-muted-foreground">
+            <PriceFormatter price={amount} />
+          </s>
+          <p className="text-xl font-bold text-gray-900 dark:text-white">
+            <PriceFormatter price={discountedAmount} />
           </p>
-
-          <div className="flex border-b-1 pb-[22px]  border-gray-slate-200 justify-between items-center">
-            <p>
-              {cartData?.duration === 365
-                ? "12 Months"
-                : cartData?.duration === 180
-                ? "6 Months"
-                : "7 Days"}{" "}
-              plan
-            </p>
-            <p className="flex mt-[10px]">
-              <del className="text-slate-500">
-                <PriceFormatter price={2 * cartData?.price} />
-              </del>
-              <p className="ml-[10px]">
-                <PriceFormatter price={cartData?.price} />
-              </p>
-            </p>
-          </div>
-
-          <div className="flex pt-[15px] justify-between items-center">
-            <h3 className="font-semibold text-[20px]">Subtotal</h3>
-            <p className="flex mt-[10px]">
-              <del className="text-slate-500">
-                <PriceFormatter price={cartData?.price} />
-              </del>
-              <p className="ml-[10px]">
-                <PriceFormatter
-                  price={
-                    cartData?.price -
-                    percentToAmount(
-                      cartData?.discountPercentage,
-                      cartData?.price
-                    )
-                  }
-                />
-              </p>
-            </p>
-          </div>
-
-          <div className="flex mt-[10px] pb-[22px] justify-between items-center">
-            <p>
-              Plan Discount{" "}
-              <span className="text-success">
-                - {cartData?.discountPercentage} %
-              </span>
-            </p>
-            <p className="mt-[10px]">
-              <p className="ml-[10px] text-primary">
-                -{" "}
-                <PriceFormatter
-                  price={percentToAmount(
-                    cartData?.discountPercentage,
-                    cartData?.price
-                  )}
-                />
-              </p>
-            </p>
-          </div>
-
-          <div className="border-b-1 pb-[22px]  border-gray-slate-200 justify-between items-center">
-            <div className="flex justify-between items-center">
-              <div className="flex justify-start items-center">
-                <p className="py-[10px]">Taxes & Fees</p>
-                <span className="text-danger ml-[11px]">
-                  + {cartData?.taxPercentage} %
-                </span>
-              </div>
-              <p className="text-primary">
-                +{" "}
-                <PriceFormatter
-                  price={percentToAmount(
-                    cartData?.taxPercentage,
-                    cartData?.price
-                  )}
-                />
-              </p>
-            </div>
-            <p className="text-slate-500">
-              (Calculated after billing information)
-            </p>
-          </div>
-
-          <div className="flex pt-[15px] justify-between items-center">
-            <h3 className="font-semibold text-[20px]">Estimated total</h3>
-            <p className="flex font-semibold text-[20px] mt-[10px]">
-              <PriceFormatter
-                price={
-                  cartData?.price -
-                  percentToAmount(
-                    cartData?.discountPercentage,
-                    cartData?.price
-                  ) +
-                  percentToAmount(cartData?.taxPercentage, cartData?.price)
-                }
-              />
-            </p>
-          </div>
-
-          <div>
-            <h4
-              onClick={() => setShowCoupon(true)}
-              className="font-semibold cursor-pointer text-indigo-500 pt-[12px]"
-            >
-              Have a Coupon?
-            </h4>
-
-            {showCoupon ? (
-              <div className="flex w-[full] justify-center items-center">
-                <input
-                  className="outline-none w-[70%] my-[20px] h-[46px] px-[10px] font-medium border-[1px] border-black-300 rounded-lg"
-                  type="text"
-                  placeholder="Coupon Code?"
-                />
-
-                <button className="bg-indigo-500 w-[30%] mx-[15px] px-[20px] py-[7px] rounded-lg font-medium text-[20px] text-white">
-                  Apply
-                </button>
-              </div>
-            ) : null}
-          </div>
         </div>
+      </div>
+
+      <div className="flex justify-between text-sm">
+        <p>
+          Plan Discount{" "}
+          <span className="text-emerald-600 font-medium">
+            -{discountPercentage}%
+          </span>
+        </p>
+        <p className="text-emerald-600">
+          - <PriceFormatter price={amount - discountedAmount} />
+        </p>
+      </div>
+
+      {/* <div className="flex justify-between text-sm">
+        <p>
+          Additional Taxes{" "}
+          <span className="text-orange-600 font-medium">
+            +{cartData?.taxPercentage}%
+          </span>
+        </p>
+        <p className="text-orange-600">
+          +{" "}
+          <PriceFormatter
+            price={cartData?.price * (cartData?.taxPercentage / 100)}
+          />
+        </p>
+      </div> */}
+
+      <div>
+        <button
+          onClick={() => setShowCoupon(!showCoupon)}
+          className="text-sm text-indigo-600 hover:underline font-medium"
+        >
+          {showCoupon ? "Hide Coupon" : "Have a Coupon?"}
+        </button>
+
+        {showCoupon && (
+          <div className="mt-4 flex gap-2">
+            <input
+              type="text"
+              className="flex-1 h-10 px-3 border border-border rounded-lg bg-muted text-foreground"
+              placeholder="Enter coupon code"
+            />
+            <button className="bg-indigo-600 hover:bg-indigo-700 transition text-white font-semibold px-4 py-2 rounded-lg">
+              Apply
+            </button>
+          </div>
+        )}
+      </div>
+
+      {showButton && (
+        <button
+          onClick={() => router.push(`/payment/checkout?plan=${planKey}`)}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 transition text-white font-semibold px-4 py-2 rounded-lg mt-4"
+        >
+          Proceed to Checkout
+        </button>
       )}
     </div>
   );

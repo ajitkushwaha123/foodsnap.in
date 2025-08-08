@@ -57,8 +57,12 @@ export default function AppShell({ children }) {
 
   return (
     <Provider store={store}>
-      <div className="min-h-screen flex bg-white dark:bg-[#0a0a1a] transition-colors duration-300 ease-in-out relative">
-        {isSidebarVisible && !isMobile && <Sidebar navItems={navItems} />}
+      <div className="flex bg-white dark:bg-[#0a0a1a] text-black dark:text-white min-h-screen h-screen">
+        {isSidebarVisible && !isMobile && (
+          <div className="fixed top-0 left-0 h-full z-40">
+            <Sidebar navItems={navItems} />
+          </div>
+        )}
 
         <AnimatePresence>
           {isSidebarVisible && isMobile && isSidebarOpen && (
@@ -78,14 +82,12 @@ export default function AppShell({ children }) {
           )}
         </AnimatePresence>
 
-        <Toaster position="top-right" />
-
-        <motion.main
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className={`flex-1 transition-all`}
+        <div
+          className={`flex-1 ml-0 ${
+            isSidebarVisible && !isMobile ? "ml-[250px]" : ""
+          } flex flex-col h-screen overflow-hidden`}
         >
+          <Toaster position="top-right" />
           {isHeaderVisible && (
             <DashboardHeader
               title={pageTitle}
@@ -93,8 +95,15 @@ export default function AppShell({ children }) {
               toggleSidebar={toggleSidebar}
             />
           )}
-          {children}
-        </motion.main>
+          <motion.main
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="flex-1 overflow-y-auto"
+          >
+            {children}
+          </motion.main>
+        </div>
       </div>
     </Provider>
   );

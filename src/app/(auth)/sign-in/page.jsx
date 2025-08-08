@@ -49,7 +49,7 @@ export default function page() {
   });
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gray-100 dark:bg-gray-900 transition-colors">
+    <div className="flex items-center justify-center  px-4 bg-gray-100 dark:bg-gray-900 transition-colors">
       <Card className="w-full max-w-md border rounded-md shadow-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
         <div className="relative">
           <img

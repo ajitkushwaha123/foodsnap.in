@@ -1,222 +1,171 @@
-import React, { useEffect, useState } from "react";
-import InputField from "../../components/InputField";
-import { checkOutFields } from "../../constants";
+"use client";
+
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
-import { checkoutDetailsValidate } from "../../helper/validate";
-import toast, { Toaster } from "react-hot-toast";
-import Icon from "../../components/Icon";
-import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { FaCheck } from "react-icons/fa";
 import PaymentButton from "./PaymentButton";
-import { submitCheckoutDetails } from "../../helper/helper";
+
+const checkOutFields = [
+  { name: "name", title: "Full Name", type: "text", placeholder: "John Doe" },
+  { name: "company", title: "Company", type: "text", placeholder: "Acme Inc." },
+  {
+    name: "email",
+    title: "Email",
+    type: "email",
+    placeholder: "example@mail.com",
+  },
+  { name: "phone", title: "Phone", type: "tel", placeholder: "+91 9876543210" },
+];
 
 const CheckoutForm = () => {
-
-  const [payStatus, setPayStatus] = useState("");
   const [step, setStep] = useState(1);
-  const [localStorageData, setLocalStorageData] = useState({});
-  const navigate = useNavigate();
+  const [payStatus, setPayStatus] = useState("");
+  const router = useRouter();
 
-
-  const getLocalCheckoutData = () => {
+  const getLocal = (key) => {
     try {
-      let checkoutData = localStorage.getItem("checkoutDetails");
-      console.log("Checkout data from localStorage:", checkoutData); // Log the checkout data
-      const parsedData = checkoutData ? JSON.parse(checkoutData) : {};
-      console.log("Parsed checkout data:", parsedData); 
-      return parsedData;
-    } catch (error) {
-      console.error("Error parsing checkout data from localStorage:", error);
+      return JSON.parse(localStorage.getItem(key)) || {};
+    } catch {
       return {};
     }
   };
 
-  const getLocalCartData = () => {
-    try {
-      let cartData = localStorage.getItem("cartDetails");
-      console.log("Cart data from localStorage:", cartData);
-      const parsedData = cartData ? JSON.parse(cartData) : {};
-      console.log("Parsed cart data:", parsedData);
-      return parsedData;
-    } catch (error) {
-      console.error("Error parsing cart data from localStorage:", error);
-      return {};
-    }
-  };
+  const cartData = getLocal("cartDetails");
 
   const formik = useFormik({
     initialValues: {
-      name: getLocalCheckoutData()?.name || "",
-      company: getLocalCheckoutData()?.company || "",
-      email: getLocalCheckoutData()?.email || "",
-      phone: getLocalCheckoutData()?.phone || "",
-      state: getLocalCheckoutData()?.state || "",
-      address: getLocalCheckoutData()?.address || "",
-      city: getLocalCheckoutData()?.city || "",
-      postalCode: getLocalCheckoutData()?.postalCode || "",
-      cartTotal:
-        getLocalCartData()?.price -
-          getLocalCartData()?.price *
-            (getLocalCartData()?.discountPercentage / 100) +
-          getLocalCartData()?.price *
-            (getLocalCartData()?.taxPercentage / 100) || 0,
+      name: getLocal("checkoutDetails").name || "",
+      company: getLocal("checkoutDetails").company || "",
+      email: getLocal("checkoutDetails").email || "",
+      phone: getLocal("checkoutDetails").phone || "",
     },
-    validate: checkoutDetailsValidate,
-    validateOnBlur: false,
-    validateOnChange: false,
-    onSubmit: (values) => {
-      console.log(values);
+    validate: (values) => {
+      const errors = {};
+      if (!values.name) errors.name = "Required";
+      if (!values.email) errors.email = "Required";
+      if (!values.phone) errors.phone = "Required";
+      return errors;
     },
+    onSubmit: () => {},
   });
 
   useEffect(() => {
     localStorage.setItem("checkoutDetails", JSON.stringify(formik.values));
   }, [formik.values]);
 
-  const handleInputChange = (field, value) => {
-    formik.setFieldValue(field, value);
-  };
-
-  const handleCheckoutDetailSubmit = async (e) => {
+  const handleContinue = async (e) => {
     e.preventDefault();
     const errors = await formik.validateForm();
     if (Object.keys(errors).length > 0) {
+      toast.error("Please fill all required fields.");
       return;
     }
-
-    console.log("Formik values:", formik.values);
-
-    setLocalStorageData(formik.values);
     setStep(2);
-
-    console.log("Formik values:", formik.values);
-
-    await submitDetails();
   };
 
-  const handlePayment = (e) => {
-    e.preventDefault();
-    navigate('/cart');
-  }
-
-  const submitDetails = async () => {
-    try{
-      const response = await submitCheckoutDetails(formik.values);
-      if(response.status === "true"){
-        toast.success(response.message);
-        setStep(2);
-      }else{
-        toast.error(response.message);
-      }
-    }catch(err){
-      toast.error("Error submitting checkout details:", err.message);
-    }
-  }
+  const renderInputField = (field) => (
+    <div key={field.name} className="col-span-1">
+      <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+        {field.title}
+      </label>
+      <input
+        type={field.type}
+        placeholder={field.placeholder}
+        value={formik.values[field.name]}
+        onChange={formik.handleChange}
+        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#1c1c1c] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+  );
 
   return (
-    <div>
-      <div className="w-full shadow-lg shadow-indigo-500/40 p-[40px] font-poppins bg-white rounded-xl">
-        <Toaster position="top-center" reverseOrder={false}></Toaster>
-        <div className="flex justify-between items-center">
+    <div className="w-full">
+      {/* Step 1: Billing Info */}
+      <div className="w-full shadow-md p-8 font-poppins bg-white dark:bg-[#121212] rounded-xl">
+        <div className="flex justify-between items-center mb-4">
           <p className="flex items-center">
-            {step === 1 ? (
-              <span className="text-primary w-[30px] h-[30px] flex justify-center items-center font-bold rounded-full border-2 border-slate-200">
-                1
-              </span>
-            ) : (
-              <span className="text-primary w-[30px] h-[30px] flex justify-center items-center font-bold rounded-full border-2 border-primary">
-                <Icon name="FaCheck" />
-              </span>
-            )}
-            <h3 className="text-xl ml-[10px] font-semibold">Billing Address</h3>
+            <span
+              className={`w-8 h-8 flex justify-center items-center font-bold rounded-full border-2 ${
+                step === 1
+                  ? "border-slate-300 text-primary"
+                  : "border-primary text-primary"
+              }`}
+            >
+              {step === 1 ? "1" : <FaCheck size={14} />}
+            </span>
+            <h3 className="text-xl ml-3 font-semibold text-gray-800 dark:text-white">
+              Billing Address
+            </h3>
           </p>
-
-          <button>
-            {step !== 1 && (
-              <p
-                onClick={() => setStep(1)}
-                className="font-semibold text-primary"
-              >
-                Edit
-              </p>
-            )}
-          </button>
+          {step !== 1 && (
+            <button
+              onClick={() => setStep(1)}
+              className="text-primary font-semibold hover:underline"
+            >
+              Edit
+            </button>
+          )}
         </div>
 
-        {step === 1 && (
+        {step === 1 ? (
           <form>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-[20px]">
-              {checkOutFields.map((fields, index) => (
-                <div key={index} className="col-span-1 md:col-span-1">
-                  <InputField
-                    title={fields.title}
-                    icon={fields.icon}
-                    type={fields.type}
-                    placeholder={fields.placeholder}
-                    inputChange={(value) =>
-                      handleInputChange(fields.name, value)
-                    }
-                    inputValue={formik.values[fields.name]}
-                  />
-                </div>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+              {checkOutFields.map(renderInputField)}
             </div>
-
             <button
-              onClick={(e) => handleCheckoutDetailSubmit(e)}
-              className="hover:bg-white px-[20px] mt-[30px] text-white sm:text-[18px] border-2 border-white flex bg-primary border-2 border-primary hover:border-2 hover:border-primary text-white hover:text-primary font-medium font-poppins justify-center items-center sm:px-4 px-3 sm:py-2 py-3 rounded-md"
+              onClick={handleContinue}
+              className="mt-6 py-2 px-6 bg-[#0025cc] text-white font-semibold rounded-md hover:bg-white hover:text-primary border-2 border-primary transition-colors"
             >
               Continue
             </button>
           </form>
-        )}
-
-        {step !== 1 && (
-          <div className="mt-[30px]">
-            <ul>
-              <li>
-                <span className="text-slate-500">{localStorageData.name}</span>
-              </li>
-              <li>
-                <span className="text-slate-500">{localStorageData.phone}</span>
-              </li>
-              <li>
-                <span className="text-slate-500">{localStorageData.email}</span>
-              </li>
-              <li>
-                <span className="text-slate-500">
-                  {localStorageData.address} , {localStorageData.city} ,
-                  {localStorageData.state} - {localStorageData.postalCode}
-                </span>
-              </li>
-            </ul>
+        ) : (
+          <div className="mt-6 space-y-1 text-gray-600 dark:text-gray-400">
+            <p>{formik.values.name}</p>
+            <p>{formik.values.phone}</p>
+            <p>{formik.values.email}</p>
+            <p>{formik.values.company}</p>
           </div>
         )}
       </div>
 
-      <div className="w-full my-[30px] shadow-lg shadow-indigo-500/40 p-[40px] font-poppins bg-white rounded-xl">
-        <Toaster position="top-center" reverseOrder={false}></Toaster>
-        <div className="flex justify-between items-center">
+      {/* Step 2: Payment */}
+      <div className="w-full my-8 shadow-md p-8 font-poppins bg-white dark:bg-[#121212] rounded-xl">
+        <div className="flex justify-between items-center mb-4">
           <p className="flex items-center">
-            {payStatus !== "SUCCESS" ? (
-              <span className="text-primary w-[30px] h-[30px] flex justify-center items-center font-bold rounded-full border-2 border-slate-200">
-                2
-              </span>
-            ) : (
-              <span className="text-primary w-[30px] h-[30px] flex justify-center items-center font-bold rounded-full border-2 border-primary">
-                <Icon name="FaCheck" />
-              </span>
-            )}
+            <span
+              className={`w-8 h-8 flex justify-center items-center font-bold rounded-full border-2 ${
+                payStatus !== "SUCCESS"
+                  ? "border-slate-300 text-primary"
+                  : "border-primary text-primary"
+              }`}
+            >
+              {payStatus !== "SUCCESS" ? "2" : <FaCheck size={14} />}
+            </span>
             <h3
-              className={`text-xl ml-[10px] ${
-                step === 1 ? "text-slate-500" : "text-black"
-              } font-semibold`}
+              className={`text-xl ml-3 font-semibold ${
+                step === 1
+                  ? "text-gray-400 dark:text-gray-500"
+                  : "text-gray-800 dark:text-white"
+              }`}
             >
               Payment
             </h3>
           </p>
         </div>
 
-        {step === 2 && <PaymentButton values={formik.values} />}
+        {step === 2 && (
+          <PaymentButton
+            amount={cartData?.discountedAmount}
+            name={formik.values.name}
+            email={formik.values.email}
+            contact={formik.values.phone}
+            notes={{ company: formik.values.company }}
+            description="Order payment via FoodSnap.in"
+          />
+        )}
       </div>
     </div>
   );

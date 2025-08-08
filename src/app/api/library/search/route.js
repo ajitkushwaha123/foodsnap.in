@@ -2,6 +2,7 @@ import { getUserId } from "@/helpers/auth";
 import { updateCredits } from "@/helpers/global";
 import dbConnect from "@/lib/dbConnect";
 import Image from "@/models/Image";
+import User from "@/models/User";
 import { NextResponse } from "next/server";
 
 export const GET = async (req) => {
@@ -16,7 +17,7 @@ export const GET = async (req) => {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("search")?.trim();
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "5", 20);
+    const limit = parseInt(searchParams.get("limit") || "5", 10);
     const skip = (page - 1) * limit;
 
     if (!query) {
@@ -36,7 +37,6 @@ export const GET = async (req) => {
     if (region) filters.region = region;
     if (premium === "true") filters.premium = true;
 
-    // Deduct Credits
     const creditUpdate = await updateCredits(userId, 1);
     if (!creditUpdate.success) {
       return NextResponse.json(
@@ -45,7 +45,25 @@ export const GET = async (req) => {
       );
     }
 
-    // Perform MongoDB Atlas Search
+    await User.findByIdAndUpdate(userId, {
+      $pull: { searchHistory: { query } },
+    });
+
+    await User.findByIdAndUpdate(
+      userId,
+      {
+        $push: {
+          searchHistory: {
+            $each: [{ query, timestamp: new Date() }],
+            $position: 0,
+            $slice: 5,
+          },
+        },
+        $inc: { totalSearches: 1 },
+      },
+      { new: true }
+    );
+
     const searchPipeline = [
       {
         $search: {
@@ -107,7 +125,6 @@ export const GET = async (req) => {
     const aggregationResult = await Image.aggregate(searchPipeline);
     const results = aggregationResult[0].paginatedResults;
     const total = aggregationResult[0].totalCount[0]?.count || 0;
-
     const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json(

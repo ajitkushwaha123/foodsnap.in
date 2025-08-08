@@ -6,32 +6,29 @@ import {
   ArrowUpRight,
   LayoutDashboard,
   History,
+  BadgeQuestionMark,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/store/hooks/useUser";
+import { FaServicestack } from "react-icons/fa";
 
 const tabs = [
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "History",
-    href: "/dashboard/history",
-    icon: History,
-  },
   {
     label: "Upgrade Plan",
     href: "/pricing",
     icon: ArrowUpRight,
   },
   {
-    label: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
+    label: "Support",
+    href: "/support",
+    icon: BadgeQuestionMark,
+  },
+  {
+    label: "Request Services",
+    href: "/request-services",
+    icon: FaServicestack,
   },
 ];
 
@@ -44,10 +41,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div>
         <Link href="/" className="flex items-center gap-2 mb-6">
-          <img
-            src="/image.png"
-            alt="Logo"
-          />
+          <img src="/image.png" alt="Logo" />
         </Link>
 
         <div className="border-b border-gray-200 dark:border-gray-700 mb-4" />

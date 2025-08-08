@@ -1,11 +1,11 @@
-import { plans } from "@/constant";
 import React from "react";
 import Pricing from "@/components/global/Pricing";
+import { services } from "@/constant";
 
 const page = () => {
   return (
     <div>
-      <Pricing plans={plans} />
+      <Pricing plans={services} />
     </div>
   );
 };

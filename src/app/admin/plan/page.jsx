@@ -8,7 +8,7 @@ import { Input, Label, Textarea, Switch, Button } from "@/components/ui";
 import { Plus, Trash } from "lucide-react";
 import StatusBar from "@/components/notification";
 
-const CreatePlanForm = () => {
+const page = () => {
   const [loading, setLoading] = useState(false);
   const [features, setFeatures] = useState([{ title: "", included: true }]);
   const [formError, setFormError] = useState(null);
@@ -215,7 +215,11 @@ const CreatePlanForm = () => {
         </div>
 
         {formik.errors.name && (
-          <StatusBar icon={""} showButton={false} message={formik.errors.name} />
+          <StatusBar
+            icon={""}
+            showButton={false}
+            message={formik.errors.name}
+          />
         )}
         {formik.errors.prices?.monthly && (
           <StatusBar
@@ -236,4 +240,4 @@ const CreatePlanForm = () => {
   );
 };
 
-export default CreatePlanForm;
+export default page;
