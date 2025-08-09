@@ -12,8 +12,11 @@ export async function middleware(req) {
   const isPublicApi = PUBLIC_API.some((p) => pathname.startsWith(p));
 
   if (!token && !isPublicPage && !isPublicApi) {
-    return NextResponse.redirect(new URL("/sign-in", req.url));
+    const signInUrl = new URL("/sign-in", req.url);
+    signInUrl.searchParams.set("redirect", pathname); 
+    return NextResponse.redirect(signInUrl);
   }
+
 
   if (token && (pathname === "/sign-in" || pathname === "/sign-up")) {
     return NextResponse.redirect(new URL("/", req.url));

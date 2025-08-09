@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Phone, Eye, EyeOff, Lock, Loader2 } from "lucide-react";
@@ -26,6 +26,9 @@ export default function Page() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect") || "/";
+
   const { register, loading, error: apiError } = useUser();
 
   const formik = useFormik({
@@ -48,7 +51,7 @@ export default function Page() {
     onSubmit: async (values) => {
       try {
         await register(values);
-        router.push("/");
+        router.push(redirectPath); // ✅ redirect to original path after sign-up
       } catch (err) {
         console.error("Registration error:", err);
       }
@@ -181,7 +184,7 @@ export default function Page() {
             <p className="text-sm text-center text-muted-foreground mt-2">
               Already have an account?{" "}
               <a
-                href="/sign-in"
+                href={`/sign-in?redirect=${encodeURIComponent(redirectPath)}`} // ✅ keep redirect param
                 className="text-[#0025cc] dark:text-indigo-400 hover:underline"
               >
                 Login

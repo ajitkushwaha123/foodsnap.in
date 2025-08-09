@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // ✅ Import useSearchParams
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Phone, Eye, EyeOff, Lock, Loader2 } from "lucide-react";
@@ -24,6 +24,7 @@ const Divider = ({ title }) => (
 export default function Page() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams(); // ✅ For reading redirect param
   const { login, loading, error: apiError } = useUser();
 
   const formik = useFormik({
@@ -42,7 +43,8 @@ export default function Page() {
     onSubmit: async (values) => {
       try {
         await login(values);
-        router.push("/");
+        const redirectPath = searchParams.get("redirect") || "/";
+        router.push(redirectPath);
       } catch (err) {
         console.error("Login error:", err);
       }
@@ -65,7 +67,7 @@ export default function Page() {
           />
         </div>
 
-        <CardContent className=" px-4 md:px-6 pb-8 pt-4">
+        <CardContent className="px-4 md:px-6 pb-8 pt-4">
           <form onSubmit={formik.handleSubmit} className="space-y-5">
             <div>
               <Label htmlFor="phone">Phone</Label>
@@ -144,7 +146,9 @@ export default function Page() {
             <p className="text-sm text-center text-muted-foreground mt-2">
               Don’t have an account?{" "}
               <a
-                href="/sign-up"
+                href={`/sign-up?redirect=${encodeURIComponent(
+                  searchParams.get("redirect") || "/"
+                )}`}
                 className="text-[#0025cc] dark:text-indigo-400 hover:underline"
               >
                 Register
