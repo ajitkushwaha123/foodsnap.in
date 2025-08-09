@@ -50,10 +50,9 @@ const Cart = () => {
   return (
     <div className="w-full min-h-screen font-poppins bg-background text-foreground px-4 sm:px-8 lg:px-12 py-10 transition-colors duration-300">
       <Toaster position="top-center" />
-      <Offer />
+      {/* <Offer /> */}
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Cart Summary */}
         <div className="w-full lg:w-2/3 rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-6 border border-gray-200 dark:border-gray-800">
           <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
             {cartData.name}
