@@ -1,4 +1,3 @@
-
 import PriceFormatter from "@/helpers/math";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -12,6 +11,19 @@ const TotalCart = ({
 }) => {
   const router = useRouter();
   const [showCoupon, setShowCoupon] = useState(false);
+
+  const handleCheckoutClick = () => {
+    if (typeof window !== "undefined" && window.fbq) {
+      window.fbq("track", "InitiateCheckout", {
+        value: discountedAmount, 
+        currency: "INR",
+        content_ids: [planKey],
+        content_type: "product",
+      });
+    }
+
+    router.push(`/payment/checkout?plan=${planKey}`);
+  };
 
   return (
     <div className="rounded-2xl lg:ml-8 shadow-lg bg-white dark:bg-gray-900 p-6 border border-gray-200 dark:border-gray-800 space-y-4">
@@ -41,21 +53,6 @@ const TotalCart = ({
         </p>
       </div>
 
-      {/* <div className="flex justify-between text-sm">
-        <p>
-          Additional Taxes{" "}
-          <span className="text-orange-600 font-medium">
-            +{cartData?.taxPercentage}%
-          </span>
-        </p>
-        <p className="text-orange-600">
-          +{" "}
-          <PriceFormatter
-            price={cartData?.price * (cartData?.taxPercentage / 100)}
-          />
-        </p>
-      </div> */}
-
       <div>
         <button
           onClick={() => setShowCoupon(!showCoupon)}
@@ -80,7 +77,7 @@ const TotalCart = ({
 
       {showButton && (
         <button
-          onClick={() => router.push(`/payment/checkout?plan=${planKey}`)}
+          onClick={handleCheckoutClick}
           className="w-full bg-indigo-600 hover:bg-indigo-700 transition text-white font-semibold px-4 py-2 rounded-lg mt-4"
         >
           Proceed to Checkout
