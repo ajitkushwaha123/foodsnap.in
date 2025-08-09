@@ -8,6 +8,7 @@ import {
   Download,
   Zap,
   ArrowUpRight,
+  Menu,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,17 +16,15 @@ import { useUser } from "@/store/hooks/useUser";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function DashboardHeader() {
-  const { user, loading, error, fetchUser } = useUser();
-
+export default function DashboardHeader({ isMobile = false, onMenuToggle }) {
+  const { user, loading, fetchUser } = useUser();
   const router = useRouter();
 
   useEffect(() => {
     fetchUser();
   }, []);
 
-  if (loading) return null;
-  if (!user) return null;
+  if (loading || !user) return null;
 
   const {
     phone,
@@ -47,51 +46,62 @@ export default function DashboardHeader() {
   return (
     <Card className="w-full px-6 py-5 mb-6 rounded-xl bg-white dark:bg-gray-900 shadow-sm border">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        {/* User Info */}
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            Welcome, <Phone size={18} className="text-gray-500" />{" "}
-            {phone || "-"}
-            {isAdmin && (
-              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                <Crown size={12} className="mr-1" />
-                Admin
-              </span>
-            )}
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Plan:{" "}
-            <span className="capitalize font-medium text-gray-700 dark:text-white">
-              {plan}
-            </span>{" "}
-            {isSubscribed ? (
-              <span className="text-green-600 ml-2 inline-flex items-center gap-1">
-                <BadgeCheck size={14} /> Active
-              </span>
-            ) : (
-              <span className="text-red-500 ml-2">Expired</span>
-            )}
-            {plan !== "free" && isSubscribed && (
-              <span className="text-xs text-gray-400 ml-3">
-                (expires on {expiresAt})
-              </span>
-            )}
-          </p>
-
-          {showUpgrade && (
+        <div className="flex items-center gap-3">
+          {isMobile && (
             <Button
-              size="sm"
-              className="mt-3 bg-[#0025cc] hover:bg-[#1c3eff] text-white text-xs font-medium"
-              onClick={() => router.push("/pricing")}
+              variant="ghost"
+              size="icon"
+              className="sm:hidden"
+              onClick={onMenuToggle}
+              aria-label="Open sidebar"
             >
-              <ArrowUpRight size={14} className="mr-1" />
-              Upgrade Plan
+              <Menu size={20} />
             </Button>
           )}
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              Welcome, <Phone size={18} className="text-gray-500" />{" "}
+              {phone || "-"}
+              {isAdmin && (
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                  <Crown size={12} className="mr-1" />
+                  Admin
+                </span>
+              )}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Plan:{" "}
+              <span className="capitalize font-medium text-gray-700 dark:text-white">
+                {plan}
+              </span>{" "}
+              {isSubscribed ? (
+                <span className="text-green-600 ml-2 inline-flex items-center gap-1">
+                  <BadgeCheck size={14} /> Active
+                </span>
+              ) : (
+                <span className="text-red-500 ml-2">Expired</span>
+              )}
+              {plan !== "free" && isSubscribed && (
+                <span className="text-xs text-gray-400 ml-3">
+                  (expires on {expiresAt})
+                </span>
+              )}
+            </p>
+
+            {showUpgrade && (
+              <Button
+                size="sm"
+                className="mt-3 bg-[#0025cc] hover:bg-[#1c3eff] text-white text-xs font-medium"
+                onClick={() => router.push("/pricing")}
+              >
+                <ArrowUpRight size={14} className="mr-1" />
+                Upgrade Plan
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full sm:w-auto">
+        <div className="lg:grid hidden grid-cols-2 sm:grid-cols-3 gap-4 w-full sm:w-auto">
           <StatItem icon={<Zap size={16} />} label="Credits" value={credits} />
           <StatItem
             icon={<Search size={16} />}

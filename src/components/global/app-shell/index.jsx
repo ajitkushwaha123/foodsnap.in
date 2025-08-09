@@ -6,23 +6,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Provider } from "react-redux";
 import { store } from "@/store";
 import { Toaster } from "react-hot-toast";
-import { Home, Users, Settings, Heart } from "lucide-react";
 import Sidebar from "../sidebar";
 import DashboardHeader from "../dashboard-header";
 
-const navItems = [
-  { label: "Home", icon: Home, href: "/" },
-  { label: "Users", icon: Users, href: "/users" },
-  { label: "Settings", icon: Settings, href: "/settings" },
-  { label: "Wishlist", icon: Heart, href: "/wishlist" },
+const excludedSidebarPaths = [
+  "/sign-in",
+  "/sign-up",
+  "/library",
+  "/admin",
+  "/pricing",
+  "/payment",
 ];
 
-function getPageTitle(pathname) {
-  const nav = navItems.find((item) =>
-    pathname === "/" ? item.href === "/" : pathname.startsWith(item.href)
-  );
-  return nav?.label || "Dashboard";
-}
+const excludedHeaderPaths = [
+  "/sign-in",
+  "/sign-up",
+  "/library",
+  "/admin",
+  "/pricing",
+];
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
@@ -30,6 +32,7 @@ export default function AppShell({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -37,30 +40,22 @@ export default function AppShell({ children }) {
   }, []);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
-  const isSidebarVisible = ![
-    "/sign-in",
-    "/sign-up",
-    "/library",
-    "/admin",
-    "/pricing",
-    "/payment",
-  ].some((path) => pathname.startsWith(path));
-
-  const isHeaderVisible =
-    !["/sign-in", "/sign-up", "/library", "/admin", "/pricing"].some((path) =>
-      pathname.startsWith(path)
-    ) && !isMobile;
-
-  const pageTitle = getPageTitle(pathname);
-  const dummyCredits = 120;
+  const isSidebarVisible = !excludedSidebarPaths.some((path) =>
+    pathname.startsWith(path)
+  );
+  const isHeaderVisible = !excludedHeaderPaths.some((path) =>
+    pathname.startsWith(path)
+  );
 
   return (
     <Provider store={store}>
       <div className="flex bg-white dark:bg-[#0a0a1a] text-black dark:text-white min-h-screen h-screen">
+   
         {isSidebarVisible && !isMobile && (
           <div className="fixed top-0 left-0 h-full z-40">
-            <Sidebar />
+            <Sidebar onLinkClick={closeSidebar} />
           </div>
         )}
 
@@ -72,23 +67,30 @@ export default function AppShell({ children }) {
               exit={{ x: "-100%" }}
               transition={{ duration: 0.3 }}
               className="fixed inset-0 z-50 flex"
+              role="dialog"
+              aria-modal="true"
             >
-              <div
-                className="absolute inset-0 bg-black/30"
-                onClick={toggleSidebar}
+              <button
+                className="absolute inset-0"
+                onClick={closeSidebar}
+                aria-label="Close sidebar"
               />
-              <Sidebar />
+              <Sidebar onLinkClick={closeSidebar} />
             </motion.div>
           )}
         </AnimatePresence>
 
         <div
-          className={`flex-1 ml-0 ${
-            isSidebarVisible && !isMobile ? "ml-[250px]" : ""
-          } flex flex-col h-screen overflow-hidden`}
+          className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-300 ${
+            isSidebarVisible && !isMobile ? "ml-72" : "ml-0"
+          }`}
         >
           <Toaster position="top-right" />
-          {isHeaderVisible && <DashboardHeader />}
+
+          {isHeaderVisible && (
+            <DashboardHeader onMenuToggle={toggleSidebar} isMobile={isMobile} />
+          )}
+
           <motion.main
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

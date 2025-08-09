@@ -73,7 +73,6 @@ export default function Page() {
 
         <CardContent className="px-4 sm:px-6 pb-8 pt-6">
           <form onSubmit={formik.handleSubmit} className="space-y-5">
-            {/* Phone */}
             <div>
               <Label htmlFor="phone">Phone Number</Label>
               <div className="relative mt-2">

@@ -39,6 +39,8 @@ export async function POST(request) {
         razorpayPaymentId: razorpay_payment_id,
       };
 
+      user.credits += 10000;
+
       await user.save();
 
       return NextResponse.json({ status: "success" }, { status: 200 });
