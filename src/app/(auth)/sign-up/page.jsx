@@ -23,6 +23,8 @@ const Divider = ({ title }) => (
 
 export default function Page() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const router = useRouter();
   const { register, loading, error: apiError } = useUser();
 
@@ -30,6 +32,7 @@ export default function Page() {
     initialValues: {
       phone: "",
       password: "",
+      confirmPassword: "",
     },
     validationSchema: Yup.object({
       phone: Yup.string()
@@ -38,6 +41,9 @@ export default function Page() {
       password: Yup.string()
         .required("Password is required")
         .min(6, "Password must be at least 6 characters"),
+      confirmPassword: Yup.string()
+        .required("Please confirm your password")
+        .oneOf([Yup.ref("password"), null], "Passwords must match"),
     }),
     onSubmit: async (values) => {
       try {
@@ -55,20 +61,22 @@ export default function Page() {
       : apiError || null;
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-md py-0 border rounded-md shadow-lg bg-white dark:bg-gray-800">
-        <div className="relative">
+    <div className="flex items-center justify-center min-h-screen px-2 md:px-4 bg-gray-100 dark:bg-gray-900">
+      <Card className="w-full py-0 max-w-md border rounded-lg shadow-lg bg-white dark:bg-gray-800">
+        <div className="relative hidden sm:block">
           <img
             src="/logo.png"
             alt="Cover"
-            className="rounded-t-md w-full object-cover h-36"
+            className="rounded-t-lg w-full object-cover"
           />
         </div>
-        <CardContent className="px-6 pb-8 pt-4">
+
+        <CardContent className="px-4 sm:px-6 pb-8 pt-6">
           <form onSubmit={formik.handleSubmit} className="space-y-5">
+            {/* Phone */}
             <div>
               <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative mt-1">
+              <div className="relative mt-2">
                 <Phone
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   size={18}
@@ -79,6 +87,7 @@ export default function Page() {
                   placeholder="9876543210"
                   type="tel"
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   value={formik.values.phone}
                   className="pl-10 h-12"
                 />
@@ -87,7 +96,7 @@ export default function Page() {
 
             <div>
               <Label htmlFor="password">Password</Label>
-              <div className="relative mt-1">
+              <div className="relative mt-2">
                 <Lock
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   size={18}
@@ -98,15 +107,48 @@ export default function Page() {
                   placeholder="••••••••"
                   type={showPassword ? "text" : "password"}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   value={formik.values.password}
                   className="pl-10 pr-10 h-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <div className="relative mt-2">
+                <Lock
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  placeholder="••••••••"
+                  type={showConfirmPassword ? "text" : "password"}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.confirmPassword}
+                  className="pl-10 pr-10 h-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
                 </button>
               </div>
             </div>
