@@ -1,11 +1,17 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 
 const Layout = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row transition-all duration-300 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
       <div className="w-full md:w-[35%] flex items-center justify-center px-2 md:px-6 bg-gray-100 dark:bg-gray-900 shadow-md dark:shadow-none transition-colors duration-300">
-        <div className="max-w-md w-full">{children}</div>
+        <div className="max-w-md w-full">
+          <Suspense
+            fallback={<div className="text-center py-10">Loading...</div>}
+          >
+            {children}
+          </Suspense>
+        </div>
       </div>
 
       <div className="hidden md:block md:w-[65%] relative overflow-hidden">
