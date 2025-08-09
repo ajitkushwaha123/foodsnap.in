@@ -17,7 +17,8 @@ export const GET = async (req) => {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("search")?.trim();
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "5", 10);
+    // const limit = parseInt(searchParams.get("limit") || "5", 10);
+    const limit = 12;
     const skip = (page - 1) * limit;
 
     if (!query) {
