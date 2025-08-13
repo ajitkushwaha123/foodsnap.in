@@ -1,6 +1,8 @@
 import { getUserId } from "@/helpers/auth";
-import Image from "@/models/Image";
 import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export const GET = async (req) => {
   try {
@@ -15,15 +17,25 @@ export const GET = async (req) => {
       });
     }
 
-    const results = await Image.find({ $text: { $search: query } })
-      .sort({ score: { $meta: "textScore" } })
-      .limit(5)
-      .select("description -_id");
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `Generate a short product description for keep it to point and concise: ${query}`,
+            },
+          ],
+        },
+      ],
+    });
 
     return NextResponse.json({
-      message: "Top descriptions fetched successfully",
+      message: "Description fetched successfully",
       success: true,
-      descriptions: results.map((r) => r.description),
+      description: result.response.text(),
     });
   } catch (err) {
     return NextResponse.json({

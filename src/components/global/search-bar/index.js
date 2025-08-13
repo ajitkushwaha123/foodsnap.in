@@ -18,7 +18,7 @@ const SearchBar = ({ onSearch }) => {
   const [query, setQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [apiSuggestions, setApiSuggestions] = useState([]);
-  const [generatedSuggestion, setGeneratedSuggestion] = useState(null);
+  const [generatedSuggestion, setGeneratedSuggestion] = useState([]);
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [loadingGenerate, setLoadingGenerate] = useState(false);
   const [loadingSearch, setLoadingSearch] = useState(false);
@@ -28,7 +28,7 @@ const SearchBar = ({ onSearch }) => {
     try {
       setLoadingGenerate(true);
       const data = await generateDescription(req);
-      setGeneratedSuggestion(data?.description || null);
+      setGeneratedSuggestion(data?.descriptions || []);
     } catch (error) {
       console.error("Error fetching description:", error);
     } finally {
@@ -36,7 +36,6 @@ const SearchBar = ({ onSearch }) => {
     }
   };
 
-  // Debounced suggestion fetching
   const debouncedFetch = useCallback(
     debounce(async (value) => {
       if (!value.trim()) {
@@ -179,43 +178,39 @@ const SearchBar = ({ onSearch }) => {
                   No results found.
                 </CommandEmpty>
 
-                {generatedSuggestion && (
+                {generatedSuggestion.length > 0 && (
                   <CommandGroup heading="Generated Description">
-                    <motion.div
-                      initial={{ opacity: 0, x: -5 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      <CommandItem
-                        key="generated"
-                        className="px-4 py-3 text-sm flex items-center justify-between gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                    {generatedSuggestion.map((desc, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, x: -5 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.15, delay: idx * 0.03 }}
                       >
-                        <div
-                          className="flex items-center gap-2 cursor-pointer"
-                          onClick={() =>
-                            handleSelectSuggestion(generatedSuggestion)
-                          }
-                        >
-                          <Sparkles className="h-4 w-4 text-yellow-500" />
-                          <span className="truncate">
-                            {generatedSuggestion}
-                          </span>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopy(generatedSuggestion, 0);
-                          }}
-                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                        >
-                          {copiedIndex === 0 ? (
-                            <Check className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <Copy className="h-4 w-4 text-gray-500" />
-                          )}
-                        </button>
-                      </CommandItem>
-                    </motion.div>
+                        <CommandItem className="px-4 py-3 text-sm flex items-center justify-between gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                          <div
+                            className="flex items-center gap-2 cursor-pointer"
+                            onClick={() => handleSelectSuggestion(desc)}
+                          >
+                            <Sparkles className="h-4 w-4 text-yellow-500" />
+                            <span className="truncate">{desc}</span>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopy(desc, idx);
+                            }}
+                            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                          >
+                            {copiedIndex === idx ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4 text-gray-500" />
+                            )}
+                          </button>
+                        </CommandItem>
+                      </motion.div>
+                    ))}
                   </CommandGroup>
                 )}
 

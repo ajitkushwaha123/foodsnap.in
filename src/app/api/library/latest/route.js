@@ -1,4 +1,3 @@
-
 import { getUserId } from "@/helpers/auth";
 import { updateCredits } from "@/helpers/update-credit";
 import dbConnect from "@/lib/dbConnect";
@@ -15,7 +14,8 @@ export const GET = async (req) => {
     }
 
     const { searchParams } = new URL(req.url);
-    const limit = parseInt(searchParams.get("limit") || "5", 10);
+    // const limit = parseInt(searchParams.get("limit") || "5", 10);
+    const limit = 12;
 
     const filters = { approved: false };
     const category = searchParams.get("category");
