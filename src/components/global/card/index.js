@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Download, CheckCircle } from "lucide-react";
+import { Download } from "lucide-react";
 import toast from "react-hot-toast";
 
 const Card = ({ image, index }) => {
@@ -18,7 +18,7 @@ const Card = ({ image, index }) => {
 
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `${image.title || "image"}.jpg`;
+      link.download = `${image.title || "foodsnap-food-image"}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -34,7 +34,7 @@ const Card = ({ image, index }) => {
   };
 
   return (
-    <motion.div
+    <motion.figure
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -42,22 +42,22 @@ const Card = ({ image, index }) => {
       className="relative rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 p-3 shadow-sm hover:shadow-lg transition-all flex flex-col gap-3"
     >
       <div className="relative">
-        {/* Zomato Approved Badge */}
-        <div className="absolute top-3 left-3 bg-red-600 text-white px-3 py-1 text-xs font-semibold rounded-sm shadow-md flex items-center gap-1">
-          <CheckCircle size={14} className="text-white" />
-          Zomato
-        </div>
-
         <img
           loading="lazy"
+          width="400"
+          height="300"
           src={image.image_url}
-          alt={image.title || "Image"}
+          alt={
+            image.title
+              ? `${image.title} - High Quality Zomato & Swiggy Approved Food Image by Foodsnap`
+              : "Premium food image for restaurant menus - Zomato & Swiggy approved"
+          }
           className="w-full h-56 sm:h-64 object-cover rounded-lg border border-zinc-200 dark:border-white/10"
         />
 
         <button
           onClick={handleDownload}
-          aria-label="Download image"
+          aria-label={`Download ${image.title || "food"} image`}
           className="absolute top-3 right-3 bg-white/80 dark:bg-black/60 backdrop-blur-sm p-2 rounded-full hover:scale-105 transition-transform"
         >
           {downloading ? (
@@ -67,7 +67,30 @@ const Card = ({ image, index }) => {
           )}
         </button>
       </div>
-    </motion.div>
+
+      {image.title && (
+        <figcaption className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+          {image.title}
+        </figcaption>
+      )}
+
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ImageObject",
+          contentUrl: image.image_url,
+          name: image.title || "Foodsnap Food Image",
+          description:
+            image.title ||
+            "High quality food image for restaurant menus - Zomato & Swiggy approved",
+          creator: {
+            "@type": "Organization",
+            name: "Foodsnap",
+            url: "https://foodsnap.in",
+          },
+        })}
+      </script>
+    </motion.figure>
   );
 };
 

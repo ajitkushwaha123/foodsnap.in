@@ -33,7 +33,6 @@ const Page = () => {
         setData((prev) => [...prev, ...(res.results || [])]);
       }
 
-      // Default to true if API doesn't send hasNextPage
       setHasNextPage(res.hasNextPage ?? res.results?.length > 0);
     } catch (err) {
       if (err?.response?.status === 402) {

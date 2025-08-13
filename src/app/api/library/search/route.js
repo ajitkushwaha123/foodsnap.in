@@ -5,30 +5,41 @@ import Image from "@/models/Image";
 import User from "@/models/User";
 import { NextResponse } from "next/server";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "http://localhost:5173", 
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Credentials": "true",
+};
+
+export const OPTIONS = async () =>
+  NextResponse.json({}, { status: 204, headers: corsHeaders });
+
 export const GET = async (req) => {
   try {
     await dbConnect();
 
     const { userId } = await getUserId();
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401, headers: corsHeaders }
+      );
     }
 
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("search")?.trim();
     const page = parseInt(searchParams.get("page") || "1", 10);
-    // const limit = parseInt(searchParams.get("limit") || "5", 10);
     const limit = 12;
     const skip = (page - 1) * limit;
 
     if (!query) {
       return NextResponse.json(
         { error: "Search query is required" },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
-    // Optional Filters
     const filters = { approved: false };
     const category = searchParams.get("category");
     const region = searchParams.get("region");
@@ -42,7 +53,7 @@ export const GET = async (req) => {
     if (!creditUpdate.success) {
       return NextResponse.json(
         { error: creditUpdate.message },
-        { status: 402 }
+        { status: 402, headers: corsHeaders }
       );
     }
 
@@ -124,8 +135,8 @@ export const GET = async (req) => {
     ];
 
     const aggregationResult = await Image.aggregate(searchPipeline);
-    const results = aggregationResult[0].paginatedResults;
-    const total = aggregationResult[0].totalCount[0]?.count || 0;
+    const results = aggregationResult[0]?.paginatedResults || [];
+    const total = aggregationResult[0]?.totalCount[0]?.count || 0;
     const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json(
@@ -140,13 +151,13 @@ export const GET = async (req) => {
         credits: creditUpdate.credits,
         message: "Search completed successfully",
       },
-      { status: 200 }
+      { status: 200, headers: corsHeaders }
     );
   } catch (error) {
     console.error("[SEARCH_ERROR]", error);
     return NextResponse.json(
       { error: "An error occurred while processing your request." },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 };
