@@ -9,10 +9,7 @@ export const GET = async (req) => {
 
     const userId = await getUserId();
     if (!userId) {
-      return NextResponse.json({
-        message: "User not found",
-        success: false,
-      });
+      return NextResponse.json({ message: "User not found", success: false });
     }
 
     const results = await Image.find({ $text: { $search: query } })
@@ -20,10 +17,12 @@ export const GET = async (req) => {
       .limit(5)
       .select("description -_id");
 
+    const descriptions = results.map((item) => item.description);
+
     return NextResponse.json({
       message: "Top descriptions fetched successfully",
       success: true,
-      descriptions: results.map((r) => r.description),
+      descriptions,
     });
   } catch (err) {
     return NextResponse.json({

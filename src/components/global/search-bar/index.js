@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Search, Clock, Sparkles, Copy, Check, Loader2 } from "lucide-react";
 import {
   Command,
@@ -58,10 +58,6 @@ const SearchBar = ({ onSearch }) => {
     []
   );
 
-  useEffect(() => {
-    debouncedFetch(query);
-  }, [query, debouncedFetch]);
-
   const historySuggestions = useMemo(() => {
     if (!user?.searchHistory) return [];
     if (!query.trim())
@@ -97,6 +93,7 @@ const SearchBar = ({ onSearch }) => {
     const value = e.target.value;
     setQuery(value);
     setShowSuggestions(!!value.trim());
+    debouncedFetch(value); // fetch API suggestions on input
   };
 
   const handleGenerateDescription = async () => {
@@ -115,13 +112,7 @@ const SearchBar = ({ onSearch }) => {
     }
   };
 
-  const allSuggestions = [
-    ...historySuggestions,
-    ...(generatedSuggestion
-      ? [{ type: "generated", value: generatedSuggestion }]
-      : []),
-    ...apiSuggestions,
-  ];
+  const allSuggestions = [...historySuggestions, ...apiSuggestions];
 
   return (
     <div className="w-full max-w-full px-3 md:px-4 relative">
@@ -141,7 +132,7 @@ const SearchBar = ({ onSearch }) => {
           type="button"
           onClick={handleGenerateDescription}
           disabled={loadingGenerate}
-          className="ml-2 flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 text-sm rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="ml-2 hidden md:flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1.5 text-sm rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loadingGenerate ? (
             <Loader2 className="animate-spin h-4 w-4" />
@@ -164,101 +155,90 @@ const SearchBar = ({ onSearch }) => {
       </form>
 
       <AnimatePresence>
-        {showSuggestions && allSuggestions.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute mx-4 mt-2 top-full left-0 right-0 z-50"
-          >
-            <Command className="border border-gray-200 dark:border-gray-700 rounded-md shadow-lg bg-white dark:bg-gray-900 overflow-hidden">
-              <CommandList>
-                <CommandEmpty className="py-3 text-gray-500 dark:text-gray-400">
-                  No results found.
-                </CommandEmpty>
+        {showSuggestions &&
+          (generatedSuggestion.length > 0 || allSuggestions.length > 0) && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute mx-4 mt-2 top-full left-0 right-0 z-50"
+            >
+              <Command className="border border-gray-200 dark:border-gray-700 rounded-md shadow-lg bg-white dark:bg-gray-900 overflow-hidden">
+                <CommandList>
+                  <CommandEmpty className="py-3 text-gray-500 dark:text-gray-400">
+                    No results found.
+                  </CommandEmpty>
 
-                {generatedSuggestion.length > 0 && (
-                  <CommandGroup heading="Generated Description">
-                    {generatedSuggestion.map((desc, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, x: -5 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.15, delay: idx * 0.03 }}
-                      >
-                        <CommandItem className="px-4 py-3 text-sm flex items-center justify-between gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                          <div
-                            className="flex items-center gap-2 cursor-pointer"
-                            onClick={() => handleSelectSuggestion(desc)}
-                          >
-                            <Sparkles className="h-4 w-4 text-yellow-500" />
-                            <span className="truncate">{desc}</span>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopy(desc, idx);
-                            }}
-                            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                          >
-                            {copiedIndex === idx ? (
-                              <Check className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <Copy className="h-4 w-4 text-gray-500" />
-                            )}
-                          </button>
-                        </CommandItem>
-                      </motion.div>
-                    ))}
-                  </CommandGroup>
-                )}
+                  {generatedSuggestion.length > 0 && (
+                    <CommandGroup heading="Generated Description">
+                      {generatedSuggestion.map((desc, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, x: -5 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.15, delay: idx * 0.03 }}
+                        >
+                          <CommandItem className="px-4 py-3 text-sm flex items-center justify-between gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                            <div
+                              className="flex items-center gap-2 cursor-pointer"
+                              onClick={() => handleSelectSuggestion(desc)}
+                            >
+                              <Sparkles className="h-4 w-4 text-yellow-500" />
+                              <span className="truncate">{desc}</span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopy(desc, idx);
+                              }}
+                              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                            >
+                              {copiedIndex === idx ? (
+                                <Check className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <Copy className="h-4 w-4 text-gray-500" />
+                              )}
+                            </button>
+                          </CommandItem>
+                        </motion.div>
+                      ))}
+                    </CommandGroup>
+                  )}
 
-                {historySuggestions.length > 0 && (
-                  <CommandGroup heading="Recent Searches">
-                    {historySuggestions.map((item, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, x: -5 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.15, delay: idx * 0.03 }}
-                      >
+                  {historySuggestions.length > 0 && (
+                    <CommandGroup heading="Recent Searches">
+                      {historySuggestions.map((item, idx) => (
                         <CommandItem
+                          key={idx}
                           onSelect={() => handleSelectSuggestion(item.value)}
                           className="cursor-pointer px-4 py-3 text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                         >
                           <Clock className="h-4 w-4 text-gray-500" />
                           <span className="truncate">{item.value}</span>
                         </CommandItem>
-                      </motion.div>
-                    ))}
-                  </CommandGroup>
-                )}
+                      ))}
+                    </CommandGroup>
+                  )}
 
-                {apiSuggestions.length > 0 && (
-                  <CommandGroup heading="From Our Menu">
-                    {apiSuggestions.map((item, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, x: -5 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.15, delay: idx * 0.03 }}
-                      >
+                  {apiSuggestions.length > 0 && (
+                    <CommandGroup heading="From Our Menu">
+                      {apiSuggestions.map((item, idx) => (
                         <CommandItem
+                          key={idx}
                           onSelect={() => handleSelectSuggestion(item.value)}
                           className="cursor-pointer px-4 py-3 text-sm flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                         >
                           <Search className="h-4 w-4 text-gray-500" />
                           <span className="truncate">{item.value}</span>
                         </CommandItem>
-                      </motion.div>
-                    ))}
-                  </CommandGroup>
-                )}
-              </CommandList>
-            </Command>
-          </motion.div>
-        )}
+                      ))}
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+            </motion.div>
+          )}
       </AnimatePresence>
     </div>
   );
