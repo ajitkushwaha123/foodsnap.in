@@ -2,6 +2,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import AppShell from "@/components/global/app-shell";
+import { Analytics } from "@vercel/analytics/next";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -20,6 +21,8 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body className={`${poppins.variable} font-poppins antialiased`}>
         <AppShell>{children}</AppShell>
+
+        <Analytics />
 
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-5HJD7C1GQ4"
