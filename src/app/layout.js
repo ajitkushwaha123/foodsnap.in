@@ -3,6 +3,7 @@ import "./globals.css";
 import Script from "next/script";
 import AppShell from "@/components/global/app-shell";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -23,6 +24,7 @@ export default function RootLayout({ children }) {
         <AppShell>{children}</AppShell>
 
         <Analytics />
+        <SpeedInsights />
 
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-5HJD7C1GQ4"
