@@ -16,7 +16,7 @@ const Page = () => {
   const [query, setQuery] = useState("");
   const [data, setData] = useState([]);
   const [page, setPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(true); 
+  const [hasNextPage, setHasNextPage] = useState(true);
   const [loading, setLoading] = useState(false);
   const [creditsError, setCreditsError] = useState(false);
 
@@ -53,12 +53,10 @@ const Page = () => {
     await fetchData({ q, page: 1 });
   };
 
-  // Initial load (latest)
   useEffect(() => {
     fetchData({ q: "", page: 1 });
   }, []);
 
-  // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {

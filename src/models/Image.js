@@ -26,14 +26,16 @@ const ImageSchema = new mongoose.Schema(
 ImageSchema.index(
   {
     title: "text",
-    tags: "text",
+    manual_tags: "text",
+    auto_tags: "text",
     cuisine: "text",
     description: "text",
   },
   {
     weights: {
       title: 10,
-      tags: 6,
+      manual_tags: 6,
+      auto_tags: 6,
       cuisine: 3,
       description: 1,
     },
@@ -41,9 +43,15 @@ ImageSchema.index(
   }
 );
 
-ImageSchema.index({ category: 1 });
-ImageSchema.index({ sub_category: 1 });
+ImageSchema.index(
+  { category: 1 },
+  { collation: { locale: "en", strength: 2 } }
+);
+ImageSchema.index(
+  { sub_category: 1 },
+  { collation: { locale: "en", strength: 2 } }
+);
+
 ImageSchema.index({ approved: 1, premium: 1, system_approved: 1 });
-ImageSchema.index({ region: 1, language: 1 });
 
 export default mongoose.models.Image || mongoose.model("Image", ImageSchema);

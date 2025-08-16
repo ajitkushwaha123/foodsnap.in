@@ -1,36 +1,36 @@
-import { getUserId } from "@/helpers/auth";
-import { updateCredits } from "@/helpers/update-credit";
 import dbConnect from "@/lib/dbConnect";
 import Image from "@/models/Image";
-import User from "@/models/User";
 import { NextResponse } from "next/server";
 
+const allowedOrigin =
+  process.env.NODE_ENV === "production"
+    ? "https://foodsnap.in"
+    : "http://localhost:3000";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:5173",
+  "Access-Control-Allow-Origin": allowedOrigin,
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Allow-Credentials": "true",
 };
 
 export const OPTIONS = async () =>
-  NextResponse.json({}, { status: 204, headers: corsHeaders });
+  new NextResponse(null, { status: 204, headers: corsHeaders });
 
-export const GET = async (req) => {
+export const GET = async (req, { params }) => {
   try {
     await dbConnect();
 
-    const { userId } = await getUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401, headers: corsHeaders }
-      );
-    }
+    const { slug } = await params;
 
+    console.log(slug);
     const { searchParams } = new URL(req.url);
-    const query = searchParams.get("search")?.trim();
+    const query = slug?.trim();
+
+    console.log("Query:", query);
+
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = 12;
+    const limit = 20;
     const skip = (page - 1) * limit;
 
     if (!query) {
@@ -48,33 +48,6 @@ export const GET = async (req) => {
     if (category) filters.category = category;
     if (region) filters.region = region;
     if (premium === "true") filters.premium = true;
-
-    const creditUpdate = await updateCredits(userId, 1);
-    if (!creditUpdate.success) {
-      return NextResponse.json(
-        { error: creditUpdate.message },
-        { status: 402, headers: corsHeaders }
-      );
-    }
-
-    await User.findByIdAndUpdate(userId, {
-      $pull: { searchHistory: { query } },
-    });
-
-    await User.findByIdAndUpdate(
-      userId,
-      {
-        $push: {
-          searchHistory: {
-            $each: [{ query, timestamp: new Date() }],
-            $position: 0,
-            $slice: 5,
-          },
-        },
-        $inc: { totalSearches: 1 },
-      },
-      { new: true }
-    );
 
     const searchPipeline = [
       {
@@ -139,16 +112,24 @@ export const GET = async (req) => {
     const total = aggregationResult[0]?.totalCount[0]?.count || 0;
     const totalPages = Math.ceil(total / limit);
 
+    console.log("Search results:", {
+      query,
+      page,
+      totalPages,
+      total,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    });
+
     return NextResponse.json(
       {
-        results,
+        data: results,
         page,
         totalPages,
         total,
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
         limit,
-        credits: creditUpdate.credits,
         message: "Search completed successfully",
       },
       { status: 200, headers: corsHeaders }
