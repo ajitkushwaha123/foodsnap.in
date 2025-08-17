@@ -1,3 +1,4 @@
+import cloudinary from "@/lib/cloudinary";
 import dbConnect from "@/lib/dbConnect";
 import Image from "@/models/Image";
 import { NextResponse } from "next/server";
@@ -112,18 +113,32 @@ export const GET = async (req, { params }) => {
     const total = aggregationResult[0]?.totalCount[0]?.count || 0;
     const totalPages = Math.ceil(total / limit);
 
-    console.log("Search results:", {
-      query,
-      page,
-      totalPages,
-      total,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
+    const transformedResults = results.map((item) => {
+      const publicId = item.image_url?.split("/upload/")[1];
+
+      if (!publicId) return item;
+
+      const url = cloudinary.url(publicId, {
+        secure: true,
+        transformation: [
+          {
+            overlay: "l__2_-removebg-preview_ycny88",
+            gravity: "south",
+            width: "1.0",
+            height: "1.0",
+            flags: "relative", 
+            opacity: 10, 
+            crop: "fill",
+          },
+        ],
+      });
+
+      return { ...item, image_url: url };
     });
 
     return NextResponse.json(
       {
-        data: results,
+        data: transformedResults, 
         page,
         totalPages,
         total,
@@ -134,6 +149,7 @@ export const GET = async (req, { params }) => {
       },
       { status: 200, headers: corsHeaders }
     );
+
   } catch (error) {
     console.error("[SEARCH_ERROR]", error);
     return NextResponse.json(
