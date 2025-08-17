@@ -19,6 +19,7 @@ const ImageSchema = new mongoose.Schema(
     sub_category: { type: String },
     food_type: { type: String },
     resId: { type: String, default: null },
+    downloads: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

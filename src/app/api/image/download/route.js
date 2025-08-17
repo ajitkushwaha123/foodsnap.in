@@ -27,8 +27,19 @@ export const GET = async (req) => {
       return NextResponse.json({ message: "Image not found" }, { status: 404 });
     }
 
+    if (user.credits < 1) {
+      return NextResponse.json(
+        { message: "Insufficient credits" },
+        { status: 403 }
+      );
+    }
+
     user.totalImagesDownloaded += 1;
+    user.credits -= 1;
     await user.save();
+
+    image.downloads += 1;
+    await image.save();
 
     const fileRes = await fetch(image.image_url);
     if (!fileRes.ok) {
