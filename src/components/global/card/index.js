@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Download } from "lucide-react";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 const Card = ({ image, index }) => {
   const [downloading, setDownloading] = useState(false);
@@ -12,9 +13,15 @@ const Card = ({ image, index }) => {
     try {
       setDownloading(true);
 
-      const response = await fetch(image.image_url);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
+      const response = await axios.get(
+        `/api/image/download?imageId=${image._id}`,
+        {
+          responseType: "blob",
+          withCredentials: true,
+        }
+      );
+
+      const blobUrl = URL.createObjectURL(response.data);
 
       const link = document.createElement("a");
       link.href = blobUrl;
@@ -22,6 +29,7 @@ const Card = ({ image, index }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
       URL.revokeObjectURL(blobUrl);
 
       toast.success("Image downloaded!");
