@@ -60,7 +60,6 @@ export default function Sidebar({ isMobile = false, onClose }) {
           isMobile ? "w-[70%] p-4 rounded-r-2xl" : "w-72 p-6 relative"
         )}
       >
-        {/* Logo */}
         <div>
           <Link
             href="/"

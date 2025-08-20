@@ -5,6 +5,7 @@ import { useFormik } from "formik";
 import toast from "react-hot-toast";
 import { FaCheck } from "react-icons/fa";
 import PaymentButton from "./PaymentButton";
+import { useUser } from "@/store/hooks/useUser";
 
 const checkOutFields = [
   { name: "name", title: "Full Name", type: "text", placeholder: "John Doe" },
@@ -15,17 +16,13 @@ const checkOutFields = [
     placeholder: "example@mail.com",
   },
   { name: "phone", title: "Phone", type: "tel", placeholder: "+91 9876543210" },
-  {
-    name: "company",
-    title: "Company",
-    type: "text",
-    placeholder: "Company (optional)",
-  },
 ];
 
 const CheckoutForm = () => {
   const [step, setStep] = useState(1);
   const [payStatus, setPayStatus] = useState("");
+
+  const { user } = useUser();
 
   // Load from localStorage helper
   const getLocal = (key) => {
@@ -41,9 +38,8 @@ const CheckoutForm = () => {
   const formik = useFormik({
     initialValues: {
       name: getLocal("checkoutDetails").name || "",
-      company: getLocal("checkoutDetails").company || "",
       email: getLocal("checkoutDetails").email || "",
-      phone: getLocal("checkoutDetails").phone || "",
+      phone: user?.phone || getLocal("checkoutDetails").phone || "",
     },
     validate: (values) => {
       const errors = {};
@@ -53,7 +49,6 @@ const CheckoutForm = () => {
       return errors;
     },
     onSubmit: (values, { setSubmitting }) => {
-      // We'll handle submission manually with handleContinue
       setSubmitting(false);
     },
   });
@@ -142,7 +137,6 @@ const CheckoutForm = () => {
             <p>{formik.values.name}</p>
             <p>{formik.values.phone}</p>
             <p>{formik.values.email}</p>
-            <p>{formik.values.company}</p>
           </div>
         )}
       </div>
@@ -178,9 +172,6 @@ const CheckoutForm = () => {
             name={formik.values.name}
             email={formik.values.email}
             contact={formik.values.phone}
-            notes={{ company: formik.values.company }}
-            description="Order payment via FoodSnap.in"
-            setPayStatus={setPayStatus} 
           />
         )}
       </div>

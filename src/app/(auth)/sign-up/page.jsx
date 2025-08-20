@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -51,7 +51,9 @@ export default function Page() {
     onSubmit: async (values) => {
       try {
         await register(values);
-        router.push(redirectPath); // ✅ redirect to original path after sign-up
+        startTransition(() => {
+          router.push(redirectPath);
+        });
       } catch (err) {
         console.error("Registration error:", err);
       }

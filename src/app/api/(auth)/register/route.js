@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import User from "@/models/User";
 import { cookies } from "next/headers";
 import { signToken } from "@/lib/jwt";
+import { track } from "@/lib/track";
 
 export const POST = async (req) => {
   try {
@@ -12,15 +13,57 @@ export const POST = async (req) => {
     const body = await req.json();
     const { phone, password } = body;
 
-    if (!phone || !password) {
+    await track({
+      typeKey: "AUTH_REGISTER_ATTEMPT",
+      kind: "system",
+      userId: null,
+      status: "info",
+      severity: "low",
+      metadata: { phone },
+      context: { url: "/api/register" },
+    });
+
+    if (!phone || !password || password.length < 6) {
+      await track({
+        typeKey: "AUTH_REGISTER_FAILED",
+        kind: "system",
+        userId: null,
+        status: "failure",
+        severity: "low",
+        metadata: {
+          errorCode: 400,
+          reason: "INVALID_INPUT",
+          phone,
+        },
+        context: { url: "/api/register" },
+      });
+
       return NextResponse.json(
-        { success: false, message: "Phone and password are required." },
+        {
+          success: false,
+          message:
+            "Phone and password are required and password must be at least 6 characters long.",
+        },
         { status: 400 }
       );
     }
 
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
+      await track({
+        typeKey: "AUTH_REGISTER_FAILED",
+        kind: "system",
+        userId: existingUser._id,
+        status: "failure",
+        severity: "medium",
+        metadata: {
+          errorCode: 409,
+          reason: "USER_ALREADY_EXISTS",
+          phone,
+        },
+        context: { url: "/api/register" },
+      });
+
       return NextResponse.json(
         { success: false, message: "User already exists." },
         { status: 409 }
@@ -50,9 +93,21 @@ export const POST = async (req) => {
     cookies().set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60,
+    });
+
+    await track({
+      typeKey: "AUTH_REGISTER_SUCCESS",
+      kind: "system",
+      userId: newUser._id,
+      status: "success",
+      severity: "low",
+      metadata: {
+        phone: newUser.phone,
+      },
+      context: { url: "/api/register" },
     });
 
     return NextResponse.json(
@@ -63,10 +118,23 @@ export const POST = async (req) => {
       { status: 201 }
     );
   } catch (error) {
+    await track({
+      typeKey: "API_ERROR",
+      kind: "system",
+      userId: null,
+      status: "failure",
+      severity: "high",
+      metadata: {
+        errorCode: 500,
+        reason: error.message || "UNKNOWN_ERROR",
+      },
+      context: { url: "/api/register" },
+    });
+
     return NextResponse.json(
       {
         success: false,
-        message: error.message || "Something went wrong...",
+        message: "Something went wrong. Please try again later.",
       },
       { status: 500 }
     );

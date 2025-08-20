@@ -24,6 +24,7 @@ const excludedHeaderPaths = [
   "/library",
   "/admin",
   "/pricing",
+  "/payment",
 ];
 
 export default function AppShell({ children }) {
@@ -52,7 +53,6 @@ export default function AppShell({ children }) {
   return (
     <Provider store={store}>
       <div className="flex bg-white dark:bg-[#0a0a1a] text-black dark:text-white min-h-screen h-screen">
-   
         {isSidebarVisible && !isMobile && (
           <div className="fixed top-0 left-0 h-full z-40">
             <Sidebar onLinkClick={closeSidebar} />

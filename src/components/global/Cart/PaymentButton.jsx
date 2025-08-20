@@ -4,18 +4,9 @@ import { useState } from "react";
 import { createOrder, loadRazorpayScript, verifyPayment } from "@/lib/razorpay";
 import toast from "react-hot-toast";
 import { FaSpinner } from "react-icons/fa";
-import { useRouter } from "next/navigation";
 
-const PaymentButton = ({
-  amount,
-  name,
-  email,
-  contact,
-  description = "Purchase from Foodsnap.in",
-  notes = {},
-}) => {
+const PaymentButton = ({ amount, name, email, contact }) => {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handlePayment = async () => {
     if (!amount || !name || !email || !contact) {
@@ -40,9 +31,8 @@ const PaymentButton = ({
         amount: order.amount,
         currency: order.currency,
         name: "Foodsnap",
-        description,
+        description: "Payment via Foodsnap", // kept static
         order_id: order.id,
-        notes,
         handler: async (response) => {
           const verification = await verifyPayment(response);
           if (verification.status === "success") {
