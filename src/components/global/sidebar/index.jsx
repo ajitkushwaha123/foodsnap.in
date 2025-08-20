@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { LogOut, ArrowUpRight, CircleHelp } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { FaServicestack } from "react-icons/fa";
@@ -71,7 +70,6 @@ export default function Sidebar({ isMobile = false, onClose }) {
 
           <div className="border-b border-gray-200 dark:border-gray-700 mb-4" />
 
-          {/* Nav */}
           <nav className="flex flex-col gap-1">
             {tabs.map((tab) => {
               const isActive = pathname.startsWith(tab.href);
@@ -101,7 +99,6 @@ export default function Sidebar({ isMobile = false, onClose }) {
           </nav>
         </div>
 
-        {/* Logout */}
         <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={() => {

@@ -5,37 +5,47 @@ import dbConnect from "@/lib/dbConnect";
 import { signToken } from "@/lib/jwt";
 import { track } from "@/lib/track";
 
+// Helper function to simplify tracking calls
+const trackLogin = async ({ typeKey, status, severity, userId, metadata }) => {
+  await track({
+    typeKey,
+    kind: "system",
+    status,
+    severity,
+    userId,
+    metadata: {
+      ...metadata,
+    },
+    context: { url: "/api/login" },
+  });
+};
+
 export const POST = async (req) => {
   try {
     await dbConnect();
 
     const { phone, password } = await req.json();
 
-    await track({
+    // Track the initial login attempt
+    await trackLogin({
       typeKey: "AUTH_LOGIN_ATTEMPT",
-      kind: "system",
-      userId: null,
       status: "info",
       severity: "low",
-      metadata: {
-        phone,
-      },
-      context: { url: "/api/login" },
+      metadata: { phone },
+      userId: null,
     });
 
     if (!phone || !password || password.length < 6) {
-      await track({
+      await trackLogin({
         typeKey: "AUTH_LOGIN_FAILED",
-        kind: "system",
-        userId: null,
         status: "failure",
         severity: "low",
         metadata: {
           errorCode: 400,
           reason: "INVALID_INPUT",
-          phone: phone,
+          phone,
         },
-        context: { url: "/api/login" },
+        userId: null,
       });
 
       return NextResponse.json(
@@ -51,18 +61,16 @@ export const POST = async (req) => {
     const user = await User.findOne({ phone });
 
     if (!user) {
-      await track({
+      await trackLogin({
         typeKey: "AUTH_LOGIN_FAILED",
-        kind: "system",
-        userId: null,
         status: "failure",
         severity: "medium",
         metadata: {
           errorCode: 404,
           reason: "USER_NOT_FOUND",
-          phone: phone,
+          phone,
         },
-        context: { url: "/api/login" },
+        userId: null,
       });
 
       return NextResponse.json(
@@ -73,18 +81,16 @@ export const POST = async (req) => {
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      await track({
+      await trackLogin({
         typeKey: "AUTH_LOGIN_FAILED",
-        kind: "system",
-        userId: user._id,
         status: "failure",
         severity: "low",
         metadata: {
           errorCode: 401,
           reason: "INVALID_PASSWORD",
-          phone: phone,
+          phone,
         },
-        context: { url: "/api/login" },
+        userId: user._id, // User ID is available here
       });
 
       return NextResponse.json(
@@ -116,33 +122,28 @@ export const POST = async (req) => {
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    await track({
+    await trackLogin({
       typeKey: "AUTH_LOGIN_SUCCESS",
-      kind: "system",
-      userId: user._id,
       status: "success",
       severity: "low",
-      metadata: {
-        phone: user.phone,
-      },
-      context: { url: "/api/login" },
+      metadata: { phone: user.phone },
+      userId: user._id,
     });
 
     return res;
   } catch (err) {
     console.error("Login Error:", err);
 
-    await track({
-      typeKey: "API_ERROR",
-      kind: "system",
-      userId: null,
+    await trackLogin({
+      typeKey: "LOGIN_API_ERROR",
       status: "failure",
       severity: "high",
       metadata: {
         errorCode: 500,
         reason: err.message || "UNKNOWN_ERROR",
+        phone: req.body?.phone || null,
       },
-      context: { url: "/api/login" },
+      userId: null,
     });
 
     return NextResponse.json(

@@ -6,6 +6,27 @@ import { cookies } from "next/headers";
 import { signToken } from "@/lib/jwt";
 import { track } from "@/lib/track";
 
+// Helper function to simplify tracking calls for registration
+const trackRegistration = async ({
+  typeKey,
+  status,
+  severity,
+  userId,
+  metadata,
+}) => {
+  await track({
+    typeKey,
+    kind: "system",
+    status,
+    severity,
+    userId,
+    metadata: {
+      ...metadata,
+    },
+    context: { url: "/api/register" },
+  });
+};
+
 export const POST = async (req) => {
   try {
     await dbConnect();
@@ -13,29 +34,26 @@ export const POST = async (req) => {
     const body = await req.json();
     const { phone, password } = body;
 
-    await track({
+    // Track the initial registration attempt
+    await trackRegistration({
       typeKey: "AUTH_REGISTER_ATTEMPT",
-      kind: "system",
-      userId: null,
       status: "info",
       severity: "low",
+      userId: null,
       metadata: { phone },
-      context: { url: "/api/register" },
     });
 
     if (!phone || !password || password.length < 6) {
-      await track({
+      await trackRegistration({
         typeKey: "AUTH_REGISTER_FAILED",
-        kind: "system",
-        userId: null,
         status: "failure",
         severity: "low",
+        userId: null,
         metadata: {
           errorCode: 400,
           reason: "INVALID_INPUT",
           phone,
         },
-        context: { url: "/api/register" },
       });
 
       return NextResponse.json(
@@ -50,18 +68,16 @@ export const POST = async (req) => {
 
     const existingUser = await User.findOne({ phone });
     if (existingUser) {
-      await track({
+      await trackRegistration({
         typeKey: "AUTH_REGISTER_FAILED",
-        kind: "system",
-        userId: existingUser._id,
         status: "failure",
         severity: "medium",
+        userId: existingUser._id,
         metadata: {
           errorCode: 409,
           reason: "USER_ALREADY_EXISTS",
           phone,
         },
-        context: { url: "/api/register" },
       });
 
       return NextResponse.json(
@@ -98,16 +114,13 @@ export const POST = async (req) => {
       maxAge: 7 * 24 * 60 * 60,
     });
 
-    await track({
+    // Track successful registration with the new user ID
+    await trackRegistration({
       typeKey: "AUTH_REGISTER_SUCCESS",
-      kind: "system",
-      userId: newUser._id,
       status: "success",
       severity: "low",
-      metadata: {
-        phone: newUser.phone,
-      },
-      context: { url: "/api/register" },
+      userId: newUser._id,
+      metadata: { phone: newUser.phone },
     });
 
     return NextResponse.json(
@@ -118,17 +131,19 @@ export const POST = async (req) => {
       { status: 201 }
     );
   } catch (error) {
-    await track({
+    console.error("Registration Error:", error);
+
+    // Track the error and include the phone number for context
+    await trackRegistration({
       typeKey: "API_ERROR",
-      kind: "system",
-      userId: null,
       status: "failure",
       severity: "high",
+      userId: null,
       metadata: {
         errorCode: 500,
         reason: error.message || "UNKNOWN_ERROR",
+        phone: body?.phone || null,
       },
-      context: { url: "/api/register" },
     });
 
     return NextResponse.json(

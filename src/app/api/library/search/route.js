@@ -4,6 +4,7 @@ import dbConnect from "@/lib/dbConnect";
 import Image from "@/models/Image";
 import User from "@/models/User";
 import { NextResponse } from "next/server";
+import { track } from "@/lib/track";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "http://localhost:5173",
@@ -15,12 +16,54 @@ const corsHeaders = {
 export const OPTIONS = async () =>
   NextResponse.json({}, { status: 204, headers: corsHeaders });
 
+// Helper function to simplify tracking calls for search
+const trackSearchEvent = async ({
+  typeKey,
+  status,
+  severity,
+  userId,
+  metadata,
+}) => {
+  await track({
+    typeKey,
+    kind: "system",
+    status,
+    severity,
+    userId,
+    metadata: {
+      ...metadata,
+    },
+    context: { url: "/api/library/search" },
+  });
+};
+
 export const GET = async (req) => {
+  let userId = null;
+  let query = null;
+
   try {
     await dbConnect();
 
-    const { userId } = await getUserId();
+    const authResult = await getUserId(req);
+    userId = authResult?.userId;
+
+    query = new URL(req.url).searchParams.get("search")?.trim() || null;
+    await trackSearchEvent({
+      typeKey: "SEARCH_ATTEMPT",
+      status: "info",
+      severity: "low",
+      userId,
+      metadata: { query },
+    });
+
     if (!userId) {
+      await trackSearchEvent({
+        typeKey: "UNAUTHORIZED_ACCESS",
+        status: "failure",
+        severity: "high",
+        userId: null,
+        metadata: { query },
+      });
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401, headers: corsHeaders }
@@ -28,12 +71,18 @@ export const GET = async (req) => {
     }
 
     const { searchParams } = new URL(req.url);
-    const query = searchParams.get("search")?.trim();
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = 12;
     const skip = (page - 1) * limit;
 
     if (!query) {
+      await trackSearchEvent({
+        typeKey: "SEARCH_FAILED",
+        status: "failure",
+        severity: "low",
+        userId,
+        metadata: { reason: "NO_QUERY", query: null },
+      });
       return NextResponse.json(
         { error: "Search query is required" },
         { status: 400, headers: corsHeaders }
@@ -51,16 +100,23 @@ export const GET = async (req) => {
 
     const creditUpdate = await updateCredits(userId, 1);
     if (!creditUpdate.success) {
+      await trackSearchEvent({
+        typeKey: "SEARCH_FAILED",
+        status: "failure",
+        severity: "medium",
+        userId,
+        metadata: { reason: "INSUFFICIENT_CREDITS", query },
+      });
       return NextResponse.json(
         { error: creditUpdate.message },
         { status: 402, headers: corsHeaders }
       );
     }
 
+    // Update user's search history and total searches
     await User.findByIdAndUpdate(userId, {
       $pull: { searchHistory: { query } },
     });
-
     await User.findByIdAndUpdate(
       userId,
       {
@@ -139,6 +195,20 @@ export const GET = async (req) => {
     const total = aggregationResult[0]?.totalCount[0]?.count || 0;
     const totalPages = Math.ceil(total / limit);
 
+    await trackSearchEvent({
+      typeKey: "SEARCH_SUCCESS",
+      status: "success",
+      severity: "low",
+      userId,
+      metadata: {
+        query,
+        returnedCount: results.length,
+        remainingCredits: creditUpdate.credits,
+        page,
+        total,
+      },
+    });
+
     return NextResponse.json(
       {
         results,
@@ -155,6 +225,15 @@ export const GET = async (req) => {
     );
   } catch (error) {
     console.error("[SEARCH_ERROR]", error);
+
+    await trackSearchEvent({
+      typeKey: "API_ERROR",
+      status: "failure",
+      severity: "critical",
+      userId,
+      metadata: { error: error.message, query },
+    });
+
     return NextResponse.json(
       { error: "An error occurred while processing your request." },
       { status: 500, headers: corsHeaders }
