@@ -89,7 +89,7 @@ export const POST = async (req) => {
     const newUser = new User({
       phone,
       password: hashedPassword,
-      credits: 50,
+      credits: 0,
       isAdmin: false,
       subscription: {
         isActive: true,
