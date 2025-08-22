@@ -8,6 +8,8 @@ export const signToken = (user) => {
       id: user._id,
       phone: user.phone,
       isAdmin: user.isAdmin,
+      credits: user.credits,
+      plan: user.subscription.plan,
     },
     JWT_SECRET,
     { expiresIn: "7d" }
