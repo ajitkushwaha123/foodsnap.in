@@ -16,7 +16,6 @@ const corsHeaders = {
 export const OPTIONS = async () =>
   NextResponse.json({}, { status: 204, headers: corsHeaders });
 
-// Helper function to simplify tracking calls for search
 const trackSearchEvent = async ({
   typeKey,
   status,

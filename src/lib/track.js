@@ -1,24 +1,28 @@
 import axios from "axios";
 
 export async function track(input) {
+  const messagePayload = {
+    key: input.userId || "anonymous",
+    value: JSON.stringify({
+      ...input,
+      tenantId: "APP",
+      occurredAt: input.occurredAt
+        ? new Date(input.occurredAt).toISOString()
+        : new Date().toISOString(),
+    }),
+  };
+
   try {
-    const res = await axios.post(
-      `${process.env.NEXT_PUBLIC_ADMIN_BASE_URL}/api/events/ingest`,
+    await axios.post(
+      `${process.env.NEXT_PUBLIC_KAFKA_SERVER_URL}/api/events/foodsnap`,
       {
-        ...input,
-        tenantId: "APP",
-        occurredAt: input.occurredAt
-          ? new Date(input.occurredAt).toISOString()
-          : undefined,
-      },
-      {
-        headers: { "Content-Type": "application/json" },
+        event: messagePayload,
       }
     );
 
-    return res.data;
+    return { success: true };
   } catch (err) {
-    console.error("track failed", err.response?.data || err.message);
-    return {};
+    console.error("❌ Track failed:", err.message);
+    return { success: false, error: err.message };
   }
 }

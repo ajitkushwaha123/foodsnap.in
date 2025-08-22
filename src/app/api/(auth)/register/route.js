@@ -6,7 +6,6 @@ import { cookies } from "next/headers";
 import { signToken } from "@/lib/jwt";
 import { track } from "@/lib/track";
 
-// Helper function to simplify tracking calls for registration
 const trackRegistration = async ({
   typeKey,
   status,
@@ -34,7 +33,6 @@ export const POST = async (req) => {
     const body = await req.json();
     const { phone, password } = body;
 
-    // Track the initial registration attempt
     await trackRegistration({
       typeKey: "AUTH_REGISTER_ATTEMPT",
       status: "info",
