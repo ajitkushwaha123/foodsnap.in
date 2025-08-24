@@ -2,9 +2,16 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Download } from "lucide-react";
+import { Download, MessageSquareWarning } from "lucide-react";
 import toast from "react-hot-toast";
 import axios from "axios";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import ImageOptions from "../general/image-options";
 
 const Card = ({ image, index }) => {
   const [downloading, setDownloading] = useState(false);
@@ -41,6 +48,12 @@ const Card = ({ image, index }) => {
     }
   };
 
+  const handleReport = () => {
+    toast.success("Reported successfully. Our team will review this image.");
+    // Optionally send API request here to flag the image
+    // axios.post("/api/report", { imageId: image._id });
+  };
+
   return (
     <motion.figure
       initial={{ opacity: 0, y: 40 }}
@@ -63,17 +76,21 @@ const Card = ({ image, index }) => {
           className="w-full h-56 sm:h-64 object-cover rounded-lg border border-zinc-200 dark:border-white/10"
         />
 
-        <button
-          onClick={handleDownload}
-          aria-label={`Download ${image.title || "food"} image`}
-          className="absolute top-3 right-3 bg-white/80 dark:bg-black/60 backdrop-blur-sm p-2 rounded-full hover:scale-105 transition-transform"
-        >
-          {downloading ? (
-            <span className="w-5 h-5 inline-block animate-spin rounded-full border-2 border-t-transparent border-black dark:border-white" />
-          ) : (
-            <Download className="w-5 h-5 text-black dark:text-white" />
-          )}
-        </button>
+        <div className="absolute top-3 right-3 flex gap-2">
+          <button
+            onClick={handleDownload}
+            aria-label={`Download ${image.title || "food"} image`}
+            className="bg-white/80 dark:bg-black/60 backdrop-blur-sm p-2 rounded-full hover:scale-105 transition-transform"
+          >
+            {downloading ? (
+              <span className="w-5 h-5 inline-block animate-spin rounded-full border-2 border-t-transparent border-black dark:border-white" />
+            ) : (
+              <Download className="w-5 h-5 text-black dark:text-white" />
+            )}
+          </button>
+
+          <ImageOptions imageId={image._id} />
+        </div>
       </div>
 
       {image.title && (

@@ -23,12 +23,8 @@ export const GET = async (req, { params }) => {
     await dbConnect();
 
     const { slug } = await params;
-
-    console.log(slug);
     const { searchParams } = new URL(req.url);
     const query = slug?.trim();
-
-    console.log("Query:", query);
 
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = 20;
@@ -126,8 +122,8 @@ export const GET = async (req, { params }) => {
             gravity: "south",
             width: "1.0",
             height: "1.0",
-            flags: "relative", 
-            opacity: 10, 
+            flags: "relative",
+            opacity: 10,
             crop: "fill",
           },
         ],
@@ -138,7 +134,7 @@ export const GET = async (req, { params }) => {
 
     return NextResponse.json(
       {
-        data: transformedResults, 
+        data: transformedResults,
         page,
         totalPages,
         total,
@@ -149,9 +145,7 @@ export const GET = async (req, { params }) => {
       },
       { status: 200, headers: corsHeaders }
     );
-
-  } catch (error) {
-    console.error("[SEARCH_ERROR]", error);
+  } catch {
     return NextResponse.json(
       { error: "An error occurred while processing your request." },
       { status: 500, headers: corsHeaders }
