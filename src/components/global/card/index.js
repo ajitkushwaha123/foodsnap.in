@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Download, MessageSquareWarning } from "lucide-react";
+import { Download, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import {
@@ -77,6 +77,14 @@ const Card = ({ image, index }) => {
         />
 
         <div className="absolute top-3 right-3 flex gap-2">
+          <button
+            onClick={handleDownload}
+            aria-label={`Download ${image.title || "food"} image`}
+            className="bg-white/80 dark:bg-black/60 backdrop-blur-sm p-2 rounded-full hover:scale-105 transition-transform"
+          >
+            <Sparkles className="w-5 h-5 text-black dark:text-white" />
+          </button>
+
           <button
             onClick={handleDownload}
             aria-label={`Download ${image.title || "food"} image`}

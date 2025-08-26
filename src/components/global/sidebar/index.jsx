@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LogOut, ArrowUpRight, CircleHelp } from "lucide-react";
+import { LogOut, ArrowUpRight, CircleHelp, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,11 @@ const tabs = [
     label: "Request Services",
     href: "/request-services",
     icon: FaServicestack,
+  },
+  {
+    label: "Image Studio",
+    href: "/studio",
+    icon: Sparkles,
   },
 ];
 

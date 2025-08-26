@@ -31,13 +31,13 @@ const PaymentButton = ({ amount, name, email, contact }) => {
         amount: order.amount,
         currency: order.currency,
         name: "Foodsnap",
-        description: "Payment via Foodsnap", // kept static
+        description: "Payment via Foodsnap",
         order_id: order.id,
         handler: async (response) => {
           const verification = await verifyPayment(response);
           if (verification.status === "success") {
             toast.success("Payment successful!");
-            window.location.href = `/`;
+            window.location.href = `/success?orderId=${order.id}&txnId=${response.razorpay_payment_id}`;
           } else {
             toast.error("Payment verification failed.");
           }
