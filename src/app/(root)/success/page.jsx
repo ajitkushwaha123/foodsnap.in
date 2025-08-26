@@ -1,10 +1,18 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle2 } from "lucide-react";
 
-export default function PaymentSuccess({
+export default function PaymentSuccessWrapper(props) {
+  return (
+    <Suspense fallback={<div className="p-6 text-center">Loading...</div>}>
+      <PaymentSuccess {...props} />
+    </Suspense>
+  );
+}
+
+function PaymentSuccess({
   amount = 999,
   currency = "INR",
   dateTime = new Date(),
@@ -47,11 +55,10 @@ export default function PaymentSuccess({
             </p>
           </div>
 
-          {/* Details */}
           <div className="p-6 grid gap-3 text-sm">
             <InfoRow label="Amount Paid" value={formattedAmount} />
-            <InfoRow label="Order ID" value={orderId} />
-            <InfoRow label="Transaction ID" value={txnId} />
+            {orderId && <InfoRow label="Order ID" value={orderId} />}
+            {txnId && <InfoRow label="Transaction ID" value={txnId} />}
             <InfoRow label="Date & Time" value={dateTime.toLocaleString()} />
           </div>
         </div>
