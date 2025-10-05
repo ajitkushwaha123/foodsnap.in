@@ -15,7 +15,6 @@ const corsHeaders = {
 export const OPTIONS = async () =>
   NextResponse.json({}, { status: 204, headers: corsHeaders });
 
-
 export const GET = async (req) => {
   let userId = null;
   let query = null;
@@ -85,28 +84,38 @@ export const GET = async (req) => {
     const searchPipeline = [
       {
         $search: {
-          index: "default",
+          index: "searchIndex",
           compound: {
             should: [
               {
                 autocomplete: {
                   query,
                   path: "title",
-                  fuzzy: { maxEdits: 2, prefixLength: 1 },
+                  score: { boost: { value: 10 } },
+                  fuzzy: { maxEdits: 1, prefixLength: 1 },
                 },
               },
               {
                 text: {
                   query,
-                  path: "tags",
-                  fuzzy: { maxEdits: 2, prefixLength: 1 },
+                  path: ["manual_tags", "auto_tags"],
+                  score: { boost: { value: 6 } },
+                  fuzzy: { maxEdits: 1 },
                 },
               },
               {
                 autocomplete: {
                   query,
                   path: "cuisine",
-                  fuzzy: { maxEdits: 2, prefixLength: 1 },
+                  score: { boost: { value: 3 } },
+                  fuzzy: { maxEdits: 1 },
+                },
+              },
+              {
+                text: {
+                  query,
+                  path: "description",
+                  score: { boost: { value: 1 } },
                 },
               },
             ],
@@ -115,8 +124,19 @@ export const GET = async (req) => {
         },
       },
       { $match: filters },
-      { $addFields: { score: { $meta: "searchScore" } } },
-      { $sort: { score: -1, quality_score: -1 } },
+      {
+        $addFields: {
+          score: {
+            $add: [
+              { $meta: "searchScore" },
+              { $multiply: ["$quality_score", 0.5] },
+              { $multiply: ["$popularity_score", 0.3] },
+              { $multiply: ["$likes", 0.2] },
+            ],
+          },
+        },
+      },
+      { $sort: { score: -1 } },
       {
         $facet: {
           paginatedResults: [
@@ -125,12 +145,15 @@ export const GET = async (req) => {
             {
               $project: {
                 title: 1,
-                tags: 1,
+                manual_tags: 1,
+                auto_tags: 1,
                 cuisine: 1,
                 image_url: 1,
                 category: 1,
                 region: 1,
                 quality_score: 1,
+                popularity_score: 1,
+                likes: 1,
                 score: 1,
               },
             },

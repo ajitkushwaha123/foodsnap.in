@@ -24,6 +24,14 @@ const ImageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+ImageSchema.index({
+  approved: 1,
+  premium: 1,
+  quality_score: -1,
+  popularity_score: -1,
+});
+
+
 ImageSchema.index(
   {
     title: "text",
@@ -52,7 +60,5 @@ ImageSchema.index(
   { sub_category: 1 },
   { collation: { locale: "en", strength: 2 } }
 );
-
-ImageSchema.index({ approved: 1, premium: 1, system_approved: 1 });
 
 export default mongoose.models.Image || mongoose.model("Image", ImageSchema);
