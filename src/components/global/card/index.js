@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Download, Sparkles } from "lucide-react";
+import { Download, Sparkles, ImageIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import {
@@ -17,6 +17,7 @@ const Card = ({ image, index }) => {
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = async () => {
+    if (downloading) return;
     try {
       setDownloading(true);
 
@@ -29,14 +30,12 @@ const Card = ({ image, index }) => {
       );
 
       const blobUrl = URL.createObjectURL(response.data);
-
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = `${image.title || "foodsnap-food-image"}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
       URL.revokeObjectURL(blobUrl);
 
       toast.success("Image downloaded!");
@@ -48,82 +47,109 @@ const Card = ({ image, index }) => {
     }
   };
 
-  const handleReport = () => {
-    toast.success("Reported successfully. Our team will review this image.");
-    // Optionally send API request here to flag the image
-    // axios.post("/api/report", { imageId: image._id });
+  const handleEnhance = () => {
+    toast.success("AI enhancement applied! ✨ (Coming soon)");
   };
 
   return (
-    <motion.figure
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
-      className="relative rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 p-3 shadow-sm hover:shadow-lg transition-all flex flex-col gap-3"
+    <motion.div
+      key={image._id || index}
+      whileHover={{ scale: 1.03 }}
+      transition={{ duration: 0.2 }}
+      className="cursor-pointer"
     >
-      <div className="relative">
-        <img
-          loading="lazy"
-          width="400"
-          height="300"
-          src={image.image_url}
-          alt={
-            image.title
-              ? `${image.title} - High Quality Zomato & Swiggy Approved Food Image by Foodsnap`
-              : "Premium food image for restaurant menus - Zomato & Swiggy approved"
-          }
-          className="w-full h-56 sm:h-64 object-cover rounded-lg border border-zinc-200 dark:border-white/10"
-        />
+      <div
+        className="overflow-hidden border-2 rounded-md p-3 border-gray-200 dark:border-gray-800 
+                   shadow-sm hover:shadow-md transition bg-white dark:bg-zinc-900"
+      >
+        <div className="relative border-2 rounded-md overflow-hidden group">
+          {image?.image_url ? (
+            <img
+              src={image.image_url}
+              alt={image.title || "Image"}
+              loading="lazy"
+              className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="w-full h-48 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <ImageIcon className="text-gray-400 w-8 h-8" />
+            </div>
+          )}
 
-        <div className="absolute top-3 right-3 flex gap-2">
-          <button
-            onClick={handleDownload}
-            aria-label={`Download ${image.title || "food"} image`}
-            className="bg-white/80 dark:bg-black/60 backdrop-blur-sm p-2 rounded-full hover:scale-105 transition-transform"
+          {/* Hover Buttons */}
+          <div
+            className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 
+                       transition-opacity duration-300"
           >
-            <Sparkles className="w-5 h-5 text-black dark:text-white" />
-          </button>
+            <TooltipProvider delayDuration={100}>
+              {/* Enhance Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleEnhance}
+                    aria-label={`Enhance ${image.title || "food"} image`}
+                    className="bg-white/80 dark:bg-black/60 backdrop-blur-sm p-2 rounded-full 
+                               hover:scale-110 active:scale-95 transition-transform shadow-sm"
+                  >
+                    <Sparkles className="w-5 h-5 text-black dark:text-white" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>AI Enhance (Coming soon)</TooltipContent>
+              </Tooltip>
 
-          <button
-            onClick={handleDownload}
-            aria-label={`Download ${image.title || "food"} image`}
-            className="bg-white/80 dark:bg-black/60 backdrop-blur-sm p-2 rounded-full hover:scale-105 transition-transform"
-          >
-            {downloading ? (
-              <span className="w-5 h-5 inline-block animate-spin rounded-full border-2 border-t-transparent border-black dark:border-white" />
-            ) : (
-              <Download className="w-5 h-5 text-black dark:text-white" />
-            )}
-          </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleDownload}
+                    aria-label={`Download ${image.title || "food"} image`}
+                    className="bg-white/80 dark:bg-black/60 backdrop-blur-sm p-2 rounded-full 
+                               hover:scale-110 active:scale-95 transition-transform shadow-sm"
+                  >
+                    {downloading ? (
+                      <span className="w-5 h-5 inline-block animate-spin rounded-full border-2 border-t-transparent border-black dark:border-white" />
+                    ) : (
+                      <Download className="w-5 h-5 text-black dark:text-white" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Download Image</TooltipContent>
+              </Tooltip>
 
-          <ImageOptions imageId={image._id} />
+              {/* More Options */}
+              <ImageOptions imageId={image._id} />
+            </TooltipProvider>
+          </div>
         </div>
+
+        {/* Image Title */}
+        {image.title && (
+          <p
+            className="mt-2 text-sm text-gray-700 dark:text-gray-300 truncate"
+            title={image.title}
+          >
+            {image.title}
+          </p>
+        )}
+
+        {/* SEO Metadata */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ImageObject",
+            contentUrl: image.image_url,
+            name: image.title || "Foodsnap Food Image",
+            description:
+              image.title ||
+              "High quality food image for restaurant menus - Zomato & Swiggy approved",
+            creator: {
+              "@type": "Organization",
+              name: "Foodsnap",
+              url: "https://foodsnap.in",
+            },
+          })}
+        </script>
       </div>
-
-      {image.title && (
-        <figcaption className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          {image.title}
-        </figcaption>
-      )}
-
-      <script type="application/ld+json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "ImageObject",
-          contentUrl: image.image_url,
-          name: image.title || "Foodsnap Food Image",
-          description:
-            image.title ||
-            "High quality food image for restaurant menus - Zomato & Swiggy approved",
-          creator: {
-            "@type": "Organization",
-            name: "Foodsnap",
-            url: "https://foodsnap.in",
-          },
-        })}
-      </script>
-    </motion.figure>
+    </motion.div>
   );
 };
 

@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const UserSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+      required: true,
+    },
     phone: { type: String, required: true, unique: true },
     password: {
       type: String,
@@ -23,15 +27,9 @@ const UserSchema = new mongoose.Schema(
       razorpayPaymentId: { type: String },
     },
 
-    searchHistory: [
-      {
-        query: { type: String, required: true },
-        timestamp: { type: Date, default: Date.now },
-      },
-    ],
-
     totalSearches: { type: Number, default: 0 },
     totalImagesDownloaded: { type: Number, default: 0 },
+    avatar: { type: String },
   },
   { timestamps: true }
 );

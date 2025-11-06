@@ -1,21 +1,29 @@
-import PriceFormatter from "@/helpers/math";
-import { useRouter } from "next/navigation";
+"use client";
+
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import PriceFormatter from "@/helpers/math";
 
 const TotalCart = ({
   amount,
   discountedAmount,
   planKey,
   discountPercentage,
+  taxPercentage = 18,
   showButton = true,
 }) => {
   const router = useRouter();
   const [showCoupon, setShowCoupon] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+
+  // Calculate tax and total after discount
+  const taxAmount = (discountedAmount * taxPercentage) / 100;
+  const totalAmount = discountedAmount + taxAmount;
 
   const handleCheckoutClick = () => {
     if (typeof window !== "undefined" && window.fbq) {
       window.fbq("track", "InitiateCheckout", {
-        value: discountedAmount, 
+        value: totalAmount,
         currency: "INR",
         content_ids: [planKey],
         content_type: "product",
@@ -26,30 +34,52 @@ const TotalCart = ({
   };
 
   return (
-    <div className="rounded-2xl lg:ml-8 shadow-lg bg-white dark:bg-gray-900 p-6 border border-gray-200 dark:border-gray-800 space-y-4">
+    <div className="rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-6 border border-gray-200 dark:border-gray-800 space-y-5">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           Subtotal
         </h3>
         <div className="text-right">
-          <s className="text-muted-foreground">
-            <PriceFormatter price={amount} />
-          </s>
+          {amount !== discountedAmount && (
+            <s className="text-muted-foreground block">
+              <PriceFormatter price={amount} />
+            </s>
+          )}
           <p className="text-xl font-bold text-gray-900 dark:text-white">
             <PriceFormatter price={discountedAmount} />
           </p>
         </div>
       </div>
 
+      {discountPercentage > 0 && (
+        <div className="flex justify-between text-sm">
+          <p>
+            Plan Discount{" "}
+            <span className="text-emerald-600 font-medium">
+              -{discountPercentage}%
+            </span>
+          </p>
+          <p className="text-emerald-600">
+            - <PriceFormatter price={amount - discountedAmount} />
+          </p>
+        </div>
+      )}
+
       <div className="flex justify-between text-sm">
+        <p>GST ({taxPercentage}%)</p>
         <p>
-          Plan Discount{" "}
-          <span className="text-emerald-600 font-medium">
-            -{discountPercentage}%
-          </span>
+          + <PriceFormatter price={taxAmount} />
         </p>
-        <p className="text-emerald-600">
-          - <PriceFormatter price={amount - discountedAmount} />
+      </div>
+
+      <hr className="border-border" />
+
+      <div className="flex justify-between items-center">
+        <p className="text-lg font-semibold text-gray-900 dark:text-white">
+          Total
+        </p>
+        <p className="text-xl font-bold text-indigo-600">
+          <PriceFormatter price={totalAmount} />
         </p>
       </div>
 
@@ -65,6 +95,8 @@ const TotalCart = ({
           <div className="mt-4 flex gap-2">
             <input
               type="text"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
               className="flex-1 h-10 px-3 border border-border rounded-lg bg-muted text-foreground"
               placeholder="Enter coupon code"
             />
@@ -83,6 +115,11 @@ const TotalCart = ({
           Proceed to Checkout
         </button>
       )}
+
+      <p className="text-xs text-muted-foreground text-center mt-2">
+        * Once your image credits are exhausted, you can upgrade or buy more
+        credits anytime.
+      </p>
     </div>
   );
 };

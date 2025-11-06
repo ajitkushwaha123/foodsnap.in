@@ -21,10 +21,10 @@ const checkOutFields = [
 const CheckoutForm = () => {
   const [step, setStep] = useState(1);
   const [payStatus, setPayStatus] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const { user } = useUser();
 
-  // Load from localStorage helper
   const getLocal = (key) => {
     try {
       return JSON.parse(localStorage.getItem(key)) || {};
@@ -48,24 +48,31 @@ const CheckoutForm = () => {
       if (!values.phone) errors.phone = "Required";
       return errors;
     },
-    onSubmit: (values, { setSubmitting }) => {
-      setSubmitting(false);
+    onSubmit: async (values) => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/payment/billing", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Failed to save billing details");
+        }
+
+        toast.success("Billing details saved successfully!");
+        localStorage.setItem("checkoutDetails", JSON.stringify(values));
+        setStep(2);
+      } catch (err) {
+        toast.error(err.message || "Something went wrong!");
+      } finally {
+        setLoading(false);
+      }
     },
   });
-
-  useEffect(() => {
-    localStorage.setItem("checkoutDetails", JSON.stringify(formik.values));
-  }, [formik.values]);
-
-  const handleContinue = async (e) => {
-    e.preventDefault();
-    const errors = await formik.validateForm();
-    if (Object.keys(errors).length > 0) {
-      toast.error("Please fill all required fields.");
-      return;
-    }
-    setStep(2);
-  };
 
   const renderInputField = (field) => (
     <div key={field.name} className="col-span-1">
@@ -93,7 +100,7 @@ const CheckoutForm = () => {
 
   return (
     <div className="w-full">
-      {/* Step 1: Billing Info */}
+      {/* Billing Section */}
       <div className="w-full shadow-md p-8 font-poppins bg-white dark:bg-[#121212] rounded-xl">
         <div className="flex justify-between items-center mb-4">
           <p className="flex items-center">
@@ -121,15 +128,20 @@ const CheckoutForm = () => {
         </div>
 
         {step === 1 ? (
-          <form onSubmit={handleContinue}>
+          <form onSubmit={formik.handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
               {checkOutFields.map(renderInputField)}
             </div>
             <button
               type="submit"
-              className="mt-6 py-2 px-6 bg-[#0025cc] text-white font-semibold rounded-md hover:bg-white hover:text-primary border-2 border-primary transition-colors"
+              disabled={loading}
+              className={`mt-6 py-2 px-6 rounded-md border-2 border-primary font-semibold transition-colors ${
+                loading
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-[#0025cc] text-white hover:bg-white hover:text-primary"
+              }`}
             >
-              Continue
+              {loading ? "Saving..." : "Continue"}
             </button>
           </form>
         ) : (
@@ -141,7 +153,6 @@ const CheckoutForm = () => {
         )}
       </div>
 
-      {/* Step 2: Payment */}
       <div className="w-full my-8 shadow-md p-8 font-poppins bg-white dark:bg-[#121212] rounded-xl">
         <div className="flex justify-between items-center mb-4">
           <p className="flex items-center">

@@ -1,16 +1,15 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { Loader2, PackageSearch, ImageIcon } from "lucide-react";
+
 import Card from "@/components/global/card";
 import InsufficientCredits from "@/components/global/user/insufficient-credit";
 import SearchBar from "@/components/global/search-bar";
 import { latest, search } from "@/helpers";
-
-const Spinner = () => (
-  <div className="flex justify-center items-center py-10">
-    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-  </div>
-);
+import { Button } from "@/components/ui/button";
+import { Card as UiCard, CardContent } from "@/components/ui/card";
 
 const Page = () => {
   const [query, setQuery] = useState("");
@@ -25,7 +24,9 @@ const Page = () => {
   const fetchData = async ({ q, page }) => {
     setLoading(true);
     try {
-      const res = q ? await search({ query: q, page }) : await latest({ page });
+      const res = q
+        ? await search({ query: q, page, limit: 12 })
+        : await latest({ page, limit: 12 });
 
       if (page === 1) {
         setData(res.results || []);
@@ -69,7 +70,6 @@ const Page = () => {
 
     const current = observerRef.current;
     if (current) observer.observe(current);
-
     return () => {
       if (current) observer.unobserve(current);
     };
@@ -81,36 +81,59 @@ const Page = () => {
     }
   }, [page]);
 
+  const showEmpty = !loading && !creditsError && data.length === 0;
+
   return (
-    <div className="bg-white dark:bg-[#0a0a1a] text-black dark:text-white px-2 md:px-4 py-8 transition-colors duration-300">
-      <div className="w-full">
-        <div className="flex w-full justify-center items-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a1a] text-black dark:text-white px-2 md:px-4 py-8 transition-colors duration-300">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full"
+      >
+        <div className="flex justify-center items-center">
           <SearchBar onSearch={handleSearch} />
         </div>
 
-        <div className="mt-10">
-          {creditsError ? (
-            <InsufficientCredits />
-          ) : loading && page === 1 ? (
-            <Spinner />
-          ) : data.length === 0 && query ? (
-            <p className="text-center text-zinc-500 dark:text-zinc-400 mt-20 text-sm">
-              No images found. Try searching a food item or dish.
-            </p>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-2">
+        <UiCard className="w-full bg-white border-none shadow-none mt-5">
+          <CardContent>
+            {creditsError ? (
+              <InsufficientCredits />
+            ) : loading && page === 1 ? (
+              <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
+                <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+                <p className="text-gray-600 text-sm font-medium">
+                  Fetching your latest images...
+                </p>
+              </div>
+            ) : showEmpty ? (
+              <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
+                <PackageSearch className="w-16 h-16 text-gray-300" />
+                <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100">
+                  No images found
+                </h3>
+                <p className="text-gray-500 text-sm max-w-sm">
+                  Try searching for a food item or dish to get started.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {data.map((image, i) => (
                   <Card key={image._id || i} image={image} index={i} />
                 ))}
               </div>
+            )}
 
-              {loading && page > 1 && <Spinner />}
-              <div ref={observerRef} className="h-10" />
-            </>
-          )}
-        </div>
-      </div>
+            {loading && page > 1 && (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+              </div>
+            )}
+
+            <div ref={observerRef} className="h-10" />
+          </CardContent>
+        </UiCard>
+      </motion.div>
     </div>
   );
 };

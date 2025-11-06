@@ -63,54 +63,47 @@ export const GET = async (req) => {
       );
     }
 
-    await User.findByIdAndUpdate(userId, {
-      $pull: { searchHistory: { query } },
-    });
-    await User.findByIdAndUpdate(
-      userId,
-      {
-        $push: {
-          searchHistory: {
-            $each: [{ query, timestamp: new Date() }],
-            $position: 0,
-            $slice: 5,
-          },
-        },
-        $inc: { totalSearches: 1 },
-      },
-      { new: true }
-    );
-
     const searchPipeline = [
       {
         $search: {
           index: "searchIndex",
           compound: {
             should: [
+              // 🥇 Exact phrase match in title
               {
-                autocomplete: {
+                phrase: {
                   query,
                   path: "title",
-                  score: { boost: { value: 10 } },
-                  fuzzy: { maxEdits: 1, prefixLength: 1 },
+                  score: { boost: { value: 20 } },
                 },
               },
+              // 🥈 Exact word match (not phrase, but close)
               {
                 text: {
                   query,
-                  path: ["manual_tags", "auto_tags"],
+                  path: "title",
+                  score: { boost: { value: 12 } },
+                },
+              },
+              // 🥉 Tags and cuisine relevance
+              {
+                text: {
+                  query,
+                  path: ["manual_tags", "auto_tags", "cuisine"],
                   score: { boost: { value: 6 } },
                   fuzzy: { maxEdits: 1 },
                 },
               },
+              // ✨ Autocomplete fallback (for typing suggestions)
               {
                 autocomplete: {
                   query,
-                  path: "cuisine",
+                  path: "title",
                   score: { boost: { value: 3 } },
-                  fuzzy: { maxEdits: 1 },
+                  fuzzy: { maxEdits: 1, prefixLength: 1 },
                 },
               },
+              // 📜 Description fallback (lowest priority)
               {
                 text: {
                   query,
@@ -123,12 +116,48 @@ export const GET = async (req) => {
           },
         },
       },
+
+      // 🧩 Filter by approval & others
       { $match: filters },
+
+      // 🧠 Custom exact-title scoring boost (for strict prioritization)
+      {
+        $addFields: {
+          exactTitleMatch: {
+            $cond: [
+              {
+                $regexMatch: {
+                  input: "$title",
+                  regex: new RegExp(`^${query}$`, "i"), // exact case-insensitive match
+                },
+              },
+              15,
+              0,
+            ],
+          },
+          partialTitleMatch: {
+            $cond: [
+              {
+                $regexMatch: {
+                  input: "$title",
+                  regex: new RegExp(`\\b${query}\\b`, "i"), // partial word match
+                },
+              },
+              5,
+              0,
+            ],
+          },
+        },
+      },
+
+      // 🧮 Combine semantic & custom scores
       {
         $addFields: {
           score: {
             $add: [
               { $meta: "searchScore" },
+              "$exactTitleMatch",
+              "$partialTitleMatch",
               { $multiply: ["$quality_score", 0.5] },
               { $multiply: ["$popularity_score", 0.3] },
               { $multiply: ["$likes", 0.2] },
@@ -136,7 +165,11 @@ export const GET = async (req) => {
           },
         },
       },
+
+      // 🚀 Sort by total score
       { $sort: { score: -1 } },
+
+      // 📄 Paginate
       {
         $facet: {
           paginatedResults: [

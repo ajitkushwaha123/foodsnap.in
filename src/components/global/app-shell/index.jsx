@@ -1,106 +1,52 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Provider } from "react-redux";
 import { store } from "@/store";
+
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SiteHeader } from "@/components/ui/site-header";
 import { Toaster } from "react-hot-toast";
-import Sidebar from "../sidebar";
-import DashboardHeader from "../dashboard-header";
-
-const excludedSidebarPaths = [
-  "/sign-in",
-  "/sign-up",
-  "/library",
-  "/admin",
-  "/pricing",
-  "/payment",
-];
-
-const excludedHeaderPaths = [
-  "/sign-in",
-  "/sign-up",
-  "/library",
-  "/admin",
-  "/pricing",
-  "/payment",
-];
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
-  const [isMobile, setIsMobile] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
-  const closeSidebar = () => setIsSidebarOpen(false);
-
-  const isSidebarVisible = !excludedSidebarPaths.some((path) =>
-    pathname.startsWith(path)
-  );
-  const isHeaderVisible = !excludedHeaderPaths.some((path) =>
-    pathname.startsWith(path)
-  );
+  const AUTH_ROUTES = ["/sign-in", "/sign-up"];
+  const isAuthPage = AUTH_ROUTES.includes(pathname);
 
   return (
     <Provider store={store}>
-      <div className="flex bg-white dark:bg-[#0a0a1a] text-black dark:text-white min-h-screen h-screen">
-        {isSidebarVisible && !isMobile && (
-          <div className="fixed top-0 left-0 h-full z-40">
-            <Sidebar onLinkClick={closeSidebar} />
-          </div>
-        )}
-
-        <AnimatePresence>
-          {isSidebarVisible && isMobile && isSidebarOpen && (
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ duration: 0.3 }}
-              className="fixed inset-0 z-50 flex"
-              role="dialog"
-              aria-modal="true"
-            >
-              <button
-                className="absolute inset-0"
-                onClick={closeSidebar}
-                aria-label="Close sidebar"
-              />
-              <Sidebar onLinkClick={closeSidebar} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div
-          className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-300 ${
-            isSidebarVisible && !isMobile ? "ml-72" : "ml-0"
-          }`}
+      {isAuthPage ? (
+        <main className="min-h-screen w-full">{children}</main>
+      ) : (
+        <SidebarProvider
+          style={{
+            "--sidebar-width": "calc(var(--spacing) * 72)",
+            "--header-height": "calc(var(--spacing) * 12)",
+          }}
         >
-          <Toaster position="top-right" />
-
-          {isHeaderVisible && (
-            <DashboardHeader onMenuToggle={toggleSidebar} isMobile={isMobile} />
-          )}
-
-          <motion.main
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="flex-1 overflow-y-auto"
-          >
-            {children}
-          </motion.main>
-        </div>
-      </div>
+          <div className="flex min-h-screen w-full">
+            <AppSidebar variant="inset" />
+            <SidebarInset className="flex flex-1 flex-col min-w-0">
+              <SiteHeader />
+              <Toaster
+                position="top-center"
+                reverseOrder={true}
+                toastOptions={{
+                  style: {
+                    background: "#fff",
+                    color: "#000",
+                    borderRadius: "8px",
+                    padding: "12px 16px",
+                  },
+                }}
+              />
+              <main className="flex-1 min-w-0">{children}</main>
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
+      )}
     </Provider>
   );
 }

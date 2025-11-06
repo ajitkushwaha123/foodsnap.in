@@ -115,7 +115,7 @@ const SearchBar = ({ onSearch }) => {
   const allSuggestions = [...historySuggestions, ...apiSuggestions];
 
   return (
-    <div className="w-full max-w-full px-3 md:px-4 relative">
+    <div className="w-full max-w-full relative">
       <form
         onSubmit={handleSubmit}
         className="flex items-center bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-2 py-2 shadow-md transition-all focus-within:ring-1 ring-[#0025cc]"

@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import Offer from "./Offer";
-import { plans, services } from "@/constants";
+import { plans } from "@/constants";
 import TotalCart from "./TotalCart";
 import PriceFormatter from "@/helpers/math";
 
@@ -16,78 +15,88 @@ const Cart = () => {
 
   useEffect(() => {
     const plan = plans.find((p) => p.key === planKey);
-    const service = services.find((s) => s.key === planKey);
 
-    if (!plan && !service) {
-      toast.error("Invalid plan or service selected");
+    if (!plan) {
+      toast.error("Invalid plan selected");
       router.push("/pricing");
       return;
     }
 
-    setCartData(plan || service);
-    localStorage.setItem("cartDetails", JSON.stringify(plan || service));
+    setCartData(plan);
+    localStorage.setItem("cartDetails", JSON.stringify(plan));
   }, [planKey, router]);
-
-  const formatDuration = (days) => {
-    if (days === 30) return "Monthly";
-    if (days === 365) return "Yearly";
-    if (days === 180) return "6 Months";
-    return `${days} Days`;
-  };
-
-  const getRenewDate = (duration) => {
-    const date = new Date();
-    date.setDate(date.getDate() + duration);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   if (!cartData) return null;
 
   return (
-    <div className="w-full min-h-screen font-poppins bg-background text-foreground px-4 sm:px-8 lg:px-12 py-10 transition-colors duration-300">
+    <div className="w-full min-h-screen font-poppins bg-gradient-to-b from-white via-neutral-50 to-white dark:from-[#080808] dark:via-[#0c0c18] dark:to-[#080808] px-2 sm:px-4 lg:px-8 py-10 transition-colors duration-300">
       <Toaster position="top-center" />
-      {/* <Offer /> */}
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="w-full lg:w-2/3 rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-6 border border-gray-200 dark:border-gray-800">
-          <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="w-full lg:w-2/3 rounded-2xl shadow-lg bg-white dark:bg-gray-900 p-8 border border-gray-200 dark:border-gray-800 transition-all hover:shadow-xl">
+          <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
             {cartData.name}
           </h3>
-          <hr className="border-border mb-4" />
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {cartData.description}
+          </p>
 
-          <div className="flex flex-col lg:flex-row lg:justify-between gap-4 lg:items-center mb-4">
-            <input
-              readOnly
-              value={formatDuration(cartData.duration)}
-              className="w-full lg:w-1/3 h-12 px-4 border border-border rounded-lg bg-muted text-foreground font-medium"
-            />
-
-            <div className="flex flex-col lg:flex-row items-start gap-4 lg:ml-auto">
-              <span className="bg-emerald-600 text-white text-sm font-semibold px-4 py-1.5 rounded-xl">
-                Save{" "}
-                <PriceFormatter
-                  price={cartData.amount - cartData.discountedAmount}
-                />
+          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl font-extrabold text-gray-900 dark:text-white">
+                <PriceFormatter price={cartData.discountedAmount} />
               </span>
-
-              <div className="lg:text-right">
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  <PriceFormatter price={cartData.discountedAmount} /> /month
-                </p>
-                <s className="text-sm text-muted-foreground">
-                  <PriceFormatter price={cartData.amount} /> /month
-                </s>
-              </div>
+              <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                (one-time payment)
+              </span>
             </div>
+
+            {cartData.discountPercentage > 0 && (
+              <div className="flex items-center gap-3">
+                <s className="text-gray-400 text-sm">
+                  <PriceFormatter price={cartData.amount} />
+                </s>
+                <span className="bg-emerald-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                  Save {cartData.discountPercentage}%
+                </span>
+              </div>
+            )}
           </div>
 
-          <p className="text-sm text-muted-foreground">
-            Renews at <PriceFormatter price={cartData.renewPrice || "-"} />
-            /month after {getRenewDate(cartData.duration)}
+          <div className="bg-neutral-50 dark:bg-[#10101a] border border-gray-200 dark:border-gray-800 rounded-xl p-5 mb-6">
+            <p className="text-base font-medium text-gray-800 dark:text-gray-200 mb-1">
+              Included in this plan:
+            </p>
+            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+              <li>
+                ✅{" "}
+                {cartData.downloads === "unlimited"
+                  ? "Unlimited image downloads"
+                  : `${cartData.downloads} image downloads`}
+              </li>
+              <li>✅ Zomato & Swiggy approved food photos</li>
+              <li>✅ High-quality, licensed food images</li>
+              {cartData.key === "pro" || cartData.key === "unlimited" ? (
+                <>
+                  <li>✅ Access to full photo library</li>
+                  <li>✅ Priority photo requests</li>
+                </>
+              ) : null}
+              {cartData.key === "unlimited" && (
+                <>
+                  <li>✅ Early access to new collections</li>
+                  <li>✅ Exclusive seasonal photo packs</li>
+                </>
+              )}
+            </ul>
+          </div>
+
+          <p className="text-sm text-muted-foreground mt-3">
+            ⚡ This is a one-time purchase. Once your{" "}
+            {cartData.downloads === "unlimited"
+              ? "unlimited credits"
+              : `${cartData.downloads} credits`}{" "}
+            are used, you can upgrade or purchase again anytime.
           </p>
         </div>
 

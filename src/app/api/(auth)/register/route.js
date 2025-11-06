@@ -10,14 +10,14 @@ export const POST = async (req) => {
     await dbConnect();
 
     const body = await req.json();
-    const { phone, password } = body;
+    const { name, phone, password } = body;
 
-    if (!phone || !password || password.length < 6) {
+    if (!phone || !password || password.length < 6 || !name) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "Phone and password are required and password must be at least 6 characters long.",
+            "Name, Phone and password are required and password must be at least 6 characters long.",
         },
         { status: 400 }
       );
@@ -34,9 +34,10 @@ export const POST = async (req) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
+      name,
       phone,
       password: hashedPassword,
-      credits: 0,
+      credits: 10,
       isAdmin: false,
       subscription: {
         isActive: true,
@@ -51,7 +52,7 @@ export const POST = async (req) => {
 
     const token = signToken(newUser);
 
-    cookies().set("token", token, {
+    await cookies().set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

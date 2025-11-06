@@ -28,7 +28,7 @@ const Checkout = () => {
   }, [planKey]);
 
   return (
-    <div className="font-poppins py-10 bg-secondary px-5 md:px-24 w-full">
+    <div className="font-poppins py-10 bg-secondary px-5 md:px-20 w-full">
       <button
         // onClick={() => router.push(`/payment/cart?plan=${plan}`)}
         className="font-medium mb-6 flex items-center bg-primary px-5 py-2 text-white rounded-md hover:bg-primary/90 transition-colors"
@@ -41,7 +41,7 @@ const Checkout = () => {
         <div className="lg:w-[65%]">
           <CheckoutForm />
         </div>
-        <div className="mt-6 lg:w-[35%] lg:mt-0">
+        <div className="mt-6 ml-8 lg:w-[35%] lg:mt-0">
           <TotalCart
             amount={cartData?.amount}
             discountedAmount={cartData?.discountedAmount}
