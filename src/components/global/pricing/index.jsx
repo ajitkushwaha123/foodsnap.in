@@ -13,7 +13,7 @@ export default function PricingSection() {
   }, []);
 
   return (
-    <section className="relative px-6 py-20 md:py-28 text-center bg-background text-foreground overflow-hidden">
+    <section className="relative px-6 py-10 md:py-14 text-center bg-background text-foreground overflow-hidden">
       <div className="absolute inset-0 -z-10">
         <div className="absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-gradient-to-b from-muted/10 to-transparent blur-3xl" />
       </div>

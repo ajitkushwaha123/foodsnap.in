@@ -18,7 +18,7 @@ const PaymentButton = ({ amount, name, email, contact, planKey }) => {
 
     const isLoaded = await loadRazorpayScript();
     if (!isLoaded) {
-      toast.error("Failed to load Razorpay SDK. Please try again.");
+      toast.error("Razorpay SDK failed to load.");
       setLoading(false);
       return;
     }
@@ -26,29 +26,22 @@ const PaymentButton = ({ amount, name, email, contact, planKey }) => {
     try {
       const order = await createOrder(amount * 100, planKey);
 
-      if (!order || !order.id) {
-        throw new Error("Order creation failed");
-      }
-
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
         name: "Foodsnap",
-        description: `${planKey} Plan Payment`,
+        description: "Payment via Foodsnap",
         order_id: order.id,
         handler: async (response) => {
-          try {
-            const verification = await verifyPayment({ ...response, planKey });
+          const verification = await verifyPayment({ ...response, planKey });
 
-            if (verification.success) {
-              toast.success("Payment successful!");
-              window.location.href = `/success?orderId=${order.id}&txnId=${response.razorpay_payment_id}`;
-            } else {
-              toast.error(verification.error || "Payment verification failed.");
-            }
-          } catch (err) {
-            console.error("Verification error:", err);
+          console.log("Payment Verification Result:", verification);
+
+          if (verification.success === true) {
+            toast.success("Payment successful!");
+            window.location.href = `/`;
+          } else {
             toast.error("Payment verification failed.");
           }
         },
@@ -58,13 +51,7 @@ const PaymentButton = ({ amount, name, email, contact, planKey }) => {
           contact,
         },
         theme: {
-          color: "#000000",
-        },
-        modal: {
-          ondismiss: () => {
-            setLoading(false);
-            toast("Payment cancelled.");
-          },
+          color: "#6366f1",
         },
       };
 
@@ -72,7 +59,7 @@ const PaymentButton = ({ amount, name, email, contact, planKey }) => {
       rzp.open();
     } catch (err) {
       console.error("Payment Error:", err);
-      toast.error("Something went wrong while processing payment.");
+      toast.error("Something went wrong!");
     } finally {
       setLoading(false);
     }
@@ -82,10 +69,10 @@ const PaymentButton = ({ amount, name, email, contact, planKey }) => {
     <button
       onClick={handlePayment}
       disabled={loading}
-      className={`w-full md:w-auto px-6 py-3 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-semibold ${
+      className={`px-6 py-3 text-white rounded flex items-center justify-center gap-2 ${
         loading
           ? "bg-gray-400 cursor-not-allowed"
-          : "bg-black hover:bg-gray-900"
+          : "bg-indigo-600 hover:bg-indigo-700"
       }`}
     >
       {loading ? (

@@ -21,6 +21,7 @@ const InsufficientCredits = () => {
         message="You’re on free plan. Redirecting you to the pricing page…"
         redirectPath="/pricing"
         buttonText="Upgrade Now"
+        showImage={true}
       />
     </div>
   );

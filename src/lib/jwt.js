@@ -1,7 +1,9 @@
 import jwt from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// ✅ Server-side signing (Node.js only)
 export const signToken = (user) => {
   return jwt.sign(
     {
@@ -9,17 +11,20 @@ export const signToken = (user) => {
       phone: user.phone,
       isAdmin: user.isAdmin,
       credits: user.credits,
-      plan: user.subscription.plan,
+      plan: user.subscription?.plan || "free",
     },
     JWT_SECRET,
     { expiresIn: "7d" }
   );
 };
 
-export const verifyJwtToken = (token) => {
+export async function verifyJwtToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch (err) {
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const { payload } = await jwtVerify(token, secret);
+    return payload;
+  } catch (error) {
+    console.error("[VERIFY_JWT_ERROR]", error);
     return null;
   }
-};
+}

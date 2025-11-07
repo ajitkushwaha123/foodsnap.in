@@ -1,8 +1,6 @@
 import { getUserId } from "@/helpers/auth";
-import { updateCredits } from "@/helpers/update-credit";
 import dbConnect from "@/lib/dbConnect";
 import Image from "@/models/Image";
-import User from "@/models/User";
 import { NextResponse } from "next/server";
 
 const corsHeaders = {
@@ -16,17 +14,11 @@ export const OPTIONS = async () =>
   NextResponse.json({}, { status: 204, headers: corsHeaders });
 
 export const GET = async (req) => {
-  let userId = null;
-  let query = null;
-
   try {
     await dbConnect();
 
     const authResult = await getUserId(req);
-    userId = authResult?.userId;
-
-    query = new URL(req.url).searchParams.get("search")?.trim() || null;
-
+    const userId = authResult?.userId;
     if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -35,10 +27,7 @@ export const GET = async (req) => {
     }
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = 12;
-    const skip = (page - 1) * limit;
-
+    const query = searchParams.get("search")?.trim();
     if (!query) {
       return NextResponse.json(
         { error: "Search query is required" },
@@ -46,22 +35,18 @@ export const GET = async (req) => {
       );
     }
 
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = 12;
+    const skip = (page - 1) * limit;
+
+    // Filters
     const filters = { approved: false };
     const category = searchParams.get("category");
     const region = searchParams.get("region");
     const premium = searchParams.get("premium");
-
     if (category) filters.category = category;
     if (region) filters.region = region;
     if (premium === "true") filters.premium = true;
-
-    const creditUpdate = await updateCredits(userId, 1);
-    if (!creditUpdate.success) {
-      return NextResponse.json(
-        { error: creditUpdate.message },
-        { status: 402, headers: corsHeaders }
-      );
-    }
 
     const searchPipeline = [
       {
@@ -69,7 +54,6 @@ export const GET = async (req) => {
           index: "searchIndex",
           compound: {
             should: [
-              // 🥇 Exact phrase match in title
               {
                 phrase: {
                   query,
@@ -77,15 +61,9 @@ export const GET = async (req) => {
                   score: { boost: { value: 20 } },
                 },
               },
-              // 🥈 Exact word match (not phrase, but close)
               {
-                text: {
-                  query,
-                  path: "title",
-                  score: { boost: { value: 12 } },
-                },
+                text: { query, path: "title", score: { boost: { value: 12 } } },
               },
-              // 🥉 Tags and cuisine relevance
               {
                 text: {
                   query,
@@ -94,7 +72,6 @@ export const GET = async (req) => {
                   fuzzy: { maxEdits: 1 },
                 },
               },
-              // ✨ Autocomplete fallback (for typing suggestions)
               {
                 autocomplete: {
                   query,
@@ -103,7 +80,6 @@ export const GET = async (req) => {
                   fuzzy: { maxEdits: 1, prefixLength: 1 },
                 },
               },
-              // 📜 Description fallback (lowest priority)
               {
                 text: {
                   query,
@@ -116,11 +92,7 @@ export const GET = async (req) => {
           },
         },
       },
-
-      // 🧩 Filter by approval & others
       { $match: filters },
-
-      // 🧠 Custom exact-title scoring boost (for strict prioritization)
       {
         $addFields: {
           exactTitleMatch: {
@@ -128,7 +100,7 @@ export const GET = async (req) => {
               {
                 $regexMatch: {
                   input: "$title",
-                  regex: new RegExp(`^${query}$`, "i"), // exact case-insensitive match
+                  regex: new RegExp(`^${query}$`, "i"),
                 },
               },
               15,
@@ -140,7 +112,7 @@ export const GET = async (req) => {
               {
                 $regexMatch: {
                   input: "$title",
-                  regex: new RegExp(`\\b${query}\\b`, "i"), // partial word match
+                  regex: new RegExp(`\\b${query}\\b`, "i"),
                 },
               },
               5,
@@ -149,8 +121,6 @@ export const GET = async (req) => {
           },
         },
       },
-
-      // 🧮 Combine semantic & custom scores
       {
         $addFields: {
           score: {
@@ -165,11 +135,7 @@ export const GET = async (req) => {
           },
         },
       },
-
-      // 🚀 Sort by total score
       { $sort: { score: -1 } },
-
-      // 📄 Paginate
       {
         $facet: {
           paginatedResults: [
@@ -210,14 +176,12 @@ export const GET = async (req) => {
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
         limit,
-        credits: creditUpdate.credits,
         message: "Search completed successfully",
       },
       { status: 200, headers: corsHeaders }
     );
   } catch (error) {
     console.error("[SEARCH_ERROR]", error);
-
     return NextResponse.json(
       { error: "An error occurred while processing your request." },
       { status: 500, headers: corsHeaders }

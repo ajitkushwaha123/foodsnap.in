@@ -138,7 +138,7 @@ const data = {
   projects: [
     {
       name: "Support",
-      url: "#",
+      url: "/support",
       icon: Frame,
     },
   ],

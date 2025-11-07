@@ -34,6 +34,7 @@ export default function Alert({
   redirectPath = "/pricing",
   buttonText = "Go Now",
   variant = "error",
+  showImage = false,
 }) {
   const router = useRouter();
   const styles = variantStyles[variant] || variantStyles.error;
@@ -48,9 +49,11 @@ export default function Alert({
         justify-between gap-3 sm:gap-4 shadow-md`}
       role="alert"
     >
-      <div className=" md:hidden">
-        <img src="./assets/low-balance-alert.png" />
-      </div>
+      {showImage && (
+        <div className=" md:hidden">
+          <img src="./assets/low-balance-alert.png" />
+        </div>
+      )}
       <div className="flex items-start sm:items-center gap-2 text-sm sm:text-base font-medium leading-tight">
         <span className="shrink-0 mt-0.5 sm:mt-0">
           {icon || styles.defaultIcon}

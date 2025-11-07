@@ -1,17 +1,14 @@
 import { getUserId } from "@/helpers/auth";
-import { updateCredits } from "@/helpers/update-credit";
 import dbConnect from "@/lib/dbConnect";
 import Image from "@/models/Image";
 import { NextResponse } from "next/server";
 
 export const GET = async (req) => {
-  let userId = null;
-
   try {
     await dbConnect();
 
     const authResult = await getUserId(req);
-    userId = authResult?.userId;
+    const userId = authResult?.userId;
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,15 +25,6 @@ export const GET = async (req) => {
     if (category) filters.category = category;
     if (region) filters.region = region;
     if (premium === "true") filters.premium = true;
-
-    // Deduct credits before fetching images
-    const creditUpdate = await updateCredits(userId, 1);
-    if (!creditUpdate.success) {
-      return NextResponse.json(
-        { error: creditUpdate.message },
-        { status: 402 }
-      );
-    }
 
     const randomPipeline = [
       { $match: filters },
@@ -60,12 +48,12 @@ export const GET = async (req) => {
       {
         results,
         limit,
-        credits: creditUpdate.credits,
         message: "Random images fetched successfully",
       },
       { status: 200 }
     );
-  } catch {
+  } catch (error) {
+    console.error("[RANDOM_FETCH_ERROR]", error);
     return NextResponse.json(
       { error: "An error occurred while fetching random images." },
       { status: 500 }

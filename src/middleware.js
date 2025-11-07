@@ -14,34 +14,76 @@ const PUBLIC_API = [
   "/api/plans",
 ];
 
+const FREE_ALLOWED_ROUTES = [
+  "/pricing",
+  "/api/plans",
+  "/api/payment",
+  "/api/payment/verify",
+  "/api/user/me",
+  "/api/support",
+  "/support",
+  "/payment/cart",
+  "/payment/checkout",
+  "/payment/success",
+  "/success",
+  "/api/payment/billing",
+];
+
 export async function middleware(req) {
   const token = req.cookies.get("token")?.value;
   const { pathname } = req.nextUrl;
 
   const isPublicPage = PUBLIC_ROUTES.some((p) => pathname.startsWith(p));
-
   const isPublicApi = PUBLIC_API.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 
-  if (!token && !isPublicPage && !isPublicApi) {
+  if (!token) {
+    if (isPublicPage || isPublicApi) return NextResponse.next();
+
+    if (pathname.startsWith("/pricing")) {
+      const signInUrl = new URL("/sign-in", req.url);
+      signInUrl.searchParams.set("redirect", "/pricing");
+      return NextResponse.redirect(signInUrl);
+    }
+
+    // redirect others to sign-in
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(signInUrl);
   }
 
-  if (token && (pathname === "/sign-in" || pathname === "/sign-up")) {
+  if (pathname === "/sign-in" || pathname === "/sign-up") {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  if (token && !isPublicApi && !isPublicPage) {
-    try {
-      verifyJwtToken(token);
-    } catch {
+  try {
+    const decoded = await verifyJwtToken(token);
+    console.log("[MIDDLEWARE_DECODED]", decoded);
+
+    if (!decoded) {
       const res = NextResponse.redirect(new URL("/sign-in", req.url));
-      res.cookies.delete("auth_token");
+      res.cookies.delete("token");
       return res;
     }
+
+    const userPlan = decoded?.plan || "free";
+
+    if (userPlan === "free") {
+      const isFreeAllowed = FREE_ALLOWED_ROUTES.some((r) =>
+        pathname.startsWith(r)
+      );
+
+      if (!isFreeAllowed) {
+        const pricingUrl = new URL("/pricing", req.url);
+        return NextResponse.redirect(pricingUrl);
+      }
+    }
+  } catch (err) {
+    console.error("[JWT_ERROR]", err);
+    const res = NextResponse.redirect(new URL("/sign-in", req.url));
+    res.cookies.delete("token");
+    return res;
   }
 
   return NextResponse.next();
