@@ -9,7 +9,7 @@ const TotalCart = ({
   discountedAmount,
   planKey,
   discountPercentage,
-  taxPercentage = 18,
+  taxPercentage = 0,
   showButton = true,
 }) => {
   const router = useRouter();
@@ -66,7 +66,7 @@ const TotalCart = ({
       )}
 
       <div className="flex justify-between text-sm">
-        <p>GST ({taxPercentage}%)</p>
+        <p>Additional Charges ({taxPercentage}%)</p>
         <p>
           + <PriceFormatter price={taxAmount} />
         </p>
@@ -83,7 +83,7 @@ const TotalCart = ({
         </p>
       </div>
 
-      <div>
+      {/* <div>
         <button
           onClick={() => setShowCoupon(!showCoupon)}
           className="text-sm text-indigo-600 hover:underline font-medium"
@@ -105,7 +105,7 @@ const TotalCart = ({
             </button>
           </div>
         )}
-      </div>
+      </div> */}
 
       {showButton && (
         <button

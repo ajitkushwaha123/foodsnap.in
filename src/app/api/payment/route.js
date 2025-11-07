@@ -3,15 +3,9 @@ import { getUserId } from "@/helpers/auth";
 import { razorpay } from "@/lib/razorpay";
 
 export async function POST(request) {
-  let userId = null;
-  let amount = null;
-
   try {
     const authResult = await getUserId(request);
-    userId = authResult?.userId;
-
-    const body = await request.json();
-    amount = body?.amount;
+    const userId = authResult?.userId;
 
     if (!userId) {
       return NextResponse.json(
@@ -20,29 +14,45 @@ export async function POST(request) {
       );
     }
 
-    if (!amount) {
+    const body = await request.json();
+    const { amount, planKey } = body || {};
+
+    if (!amount || !planKey) {
       return NextResponse.json(
-        { error: "Amount is required" },
+        { error: "Amount and planKey are required." },
         { status: 400 }
       );
     }
 
     const options = {
-      amount,
+      amount: Math.round(amount), 
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
-      notes: { userId: userId.toString() },
+      notes: {
+        userId: userId.toString(),
+        planKey,
+        origin: "Foodsnap Checkout",
+      },
     };
 
-    // Create a new order with Razorpay
     const order = await razorpay.orders.create(options);
+
+    if (!order) {
+      return NextResponse.json(
+        { error: "Failed to create Razorpay order." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(order, { status: 200 });
   } catch (error) {
     console.error("Payment Order Creation Error:", error);
-
     return NextResponse.json(
-      { error: error.message || "An internal server error occurred." },
+      {
+        error:
+          error?.message ||
+          "An unexpected error occurred while creating the order.",
+      },
       { status: 500 }
     );
   }

@@ -37,10 +37,10 @@ export const POST = async (req) => {
       name,
       phone,
       password: hashedPassword,
-      credits: 10,
+      credits: 0,
       isAdmin: false,
       subscription: {
-        isActive: true,
+        isActive: false,
         expiresAt: null,
         plan: "free",
       },

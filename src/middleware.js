@@ -11,6 +11,7 @@ const PUBLIC_API = [
   "/api/image/search",
   "/api/image/sub-category",
   "/api/image/title",
+  "/api/plans",
 ];
 
 export async function middleware(req) {

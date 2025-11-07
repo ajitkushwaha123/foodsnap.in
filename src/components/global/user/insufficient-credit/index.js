@@ -16,7 +16,7 @@ const InsufficientCredits = () => {
   }, [router]);
 
   return (
-    <div className="flex items-center justify-center w-full bg-white dark:bg-[#0a0a0a] px-4">
+    <div className="flex items-center justify-center w-full bg-white dark:bg-[#0a0a0a]">
       <Alert
         message="You’re on free plan. Redirecting you to the pricing page…"
         redirectPath="/pricing"

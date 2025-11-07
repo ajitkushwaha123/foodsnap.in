@@ -1,141 +1,154 @@
 "use client";
 
-import { Check, Sparkles, ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { usePlan } from "@/store/hooks/usePlan";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { CheckCircle2, ArrowRight, Loader2, PackageSearch } from "lucide-react";
+import { useEffect } from "react";
 
-export default function Pricing({ plans }) {
-  const router = useRouter();
-  const [loaded, setLoaded] = useState(false);
+export default function PricingSection() {
+  const { plans, loading, error, getAllActivePlans } = usePlan();
 
   useEffect(() => {
-    const timeout = setTimeout(() => setLoaded(true), 100);
-    return () => clearTimeout(timeout);
+    getAllActivePlans();
   }, []);
 
   return (
-    <section className="relative py-20 overflow-hidden bg-gradient-to-b from-white to-neutral-50 dark:from-[#09090f] dark:to-[#0c0c15]">
-      {/* background light glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-[900px] h-[900px] bg-violet-500/10 blur-[160px] rounded-full" />
+    <section className="relative px-6 py-20 md:py-28 text-center bg-background text-foreground overflow-hidden">
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute left-1/2 top-1/3 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-gradient-to-b from-muted/10 to-transparent blur-3xl" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-6 text-center">
-        {/* Heading */}
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight"
-        >
-          Pick the Right Plan for Your Needs
-        </motion.h2>
+      {/* Heading */}
+      <motion.h2
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="text-4xl md:text-5xl font-bold mb-4 tracking-tight"
+      >
+        Choose Your Perfect Plan
+      </motion.h2>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.6 }}
-          className="text-lg text-gray-600 dark:text-gray-400 mb-16 max-w-2xl mx-auto"
-        >
-          Choose the plan that fits your restaurant’s photo needs — from a small
-          trial to unlimited access.
-        </motion.p>
+      <motion.p
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.4 }}
+        className="text-muted-foreground max-w-2xl mx-auto mb-14"
+      >
+        Affordable and scalable pricing designed for food businesses — from
+        startups to restaurant chains.
+      </motion.p>
 
-        {/* Pricing Cards */}
-        <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 place-items-stretch">
-          {plans.map((plan, index) => (
+      {/* Loading State */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="animate-spin w-8 h-8 text-muted-foreground mb-3" />
+          <p className="text-sm text-muted-foreground">
+            Fetching your plans...
+          </p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {!loading && error && (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-red-500 font-medium mb-3">
+            Failed to load plans. Please try again.
+          </p>
+          <button
+            onClick={refetch}
+            className="px-4 py-2 border border-border rounded-md hover:bg-foreground hover:text-background transition-all"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && plans.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center justify-center py-24 text-muted-foreground"
+        >
+          <div className="relative flex items-center justify-center w-20 h-20 rounded-full bg-muted/20 mb-6">
+            <PackageSearch className="w-10 h-10 opacity-70" />
+          </div>
+          <h3 className="text-2xl font-semibold text-foreground mb-2">
+            No Active Plan
+          </h3>
+          <p className="text-sm text-muted-foreground max-w-sm mb-6">
+            You don’t have an active plan right now. Explore our latest plans
+            and get access to high-quality, Zomato-approved food images
+            instantly.
+          </p>
+          <motion.a
+            href="/pricing"
+            whileTap={{ scale: 0.97 }}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium border border-border hover:bg-foreground hover:text-background transition-all"
+          >
+            View Plans <ArrowRight className="w-4 h-4" />
+          </motion.a>
+        </motion.div>
+      )}
+
+      {!loading && !error && plans.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto"
+        >
+          {plans.map((plan, i) => (
             <motion.div
-              key={plan.key}
-              initial={{ opacity: 0, y: 40 }}
-              animate={loaded ? { opacity: 1, y: 0 } : {}}
-              transition={{ delay: index * 0.15, duration: 0.6 }}
-              whileHover={{
-                y: -5,
-                scale: 1.03,
-                boxShadow: "0px 10px 40px rgba(139,92,246,0.2)",
-              }}
-              className={`relative rounded-3xl p-8 transition-all duration-300 border text-left
+              key={plan._id || plan.key || i}
+              whileHover={{ scale: 1.03, y: -4 }}
+              transition={{ type: "spring", stiffness: 170, damping: 15 }}
+              className={`group relative flex flex-col justify-between border rounded-2xl p-6 backdrop-blur-sm transition-all duration-300
                 ${
                   plan.highlight
-                    ? "bg-gradient-to-b from-violet-50 to-white dark:from-violet-900/30 dark:to-[#121226]/70 border-violet-400/60 shadow-[0_0_35px_-10px_rgba(139,92,246,0.4)]"
-                    : "bg-white/90 dark:bg-[#0b0b17]/70 border-neutral-200/70 dark:border-neutral-700/60"
+                    ? "border-foreground/30 bg-foreground/5"
+                    : "border-border bg-card/50"
                 }`}
             >
               {plan.highlight && (
-                <div className="absolute -top-4 right-6 px-3 py-1 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-semibold rounded-full shadow-lg">
-                  MOST POPULAR
-                </div>
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-semibold bg-foreground text-background px-3 py-1 rounded-full shadow-sm">
+                  Most Popular
+                </span>
               )}
 
-              <div className="flex flex-col items-start gap-3">
-                <div className="flex items-center justify-between w-full">
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {plan.name}
-                  </h3>
-                  {plan.highlight && (
-                    <Sparkles className="text-violet-500 h-5 w-5" />
-                  )}
-                </div>
-
-                <motion.p
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-4xl font-extrabold mt-2 text-gray-900 dark:text-white"
-                >
-                  {plan.price}
-                </motion.p>
-
-                <div className="mt-3 flex items-center gap-2 text-violet-600 dark:text-violet-400 font-semibold text-sm bg-violet-100/50 dark:bg-violet-900/30 px-3 py-1 rounded-full">
-                  <ImageIcon className="h-4 w-4" />
-                  <span>{plan.downloads} image downloads</span>
-                </div>
-
-                <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-left mb-6">
+                <h3 className="text-lg font-semibold mb-1">{plan.name}</h3>
+                <p className="text-4xl font-bold mb-2">{plan.price}</p>
+                <p className="text-sm text-muted-foreground">
                   {plan.description}
                 </p>
               </div>
 
-              <Button
-                onClick={() => router.push(plan.link || "#")}
-                className={`mt-10 w-full py-3 rounded-xl font-semibold tracking-wide flex items-center justify-center gap-2 text-base transition-all
+              <ul className="space-y-3 text-start text-sm mb-8">
+                {plan.features?.map((feature, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-foreground/80" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <motion.a
+                href={plan.link}
+                whileTap={{ scale: 0.97 }}
+                className={`mt-auto w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 border transition-all duration-300
                   ${
                     plan.highlight
-                      ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700 shadow-lg"
-                      : "bg-neutral-100 text-gray-900 hover:bg-neutral-200 dark:bg-[#ffffff10] dark:text-white dark:hover:bg-[#ffffff20]"
+                      ? "bg-foreground text-background hover:bg-foreground/90"
+                      : "border-border hover:bg-foreground/10"
                   }`}
               >
-                {plan.button}
-              </Button>
+                {plan.button || "Get Started"}
+                <ArrowRight className="w-4 h-4" />
+              </motion.a>
             </motion.div>
           ))}
-        </div>
-
-        <div className="mt-8 mx-auto text-left">
-          <div className="rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white/70 dark:bg-[#0b0b17]/60 backdrop-blur-md p-6">
-            <ul className="grid sm:grid-cols-2 gap-3 text-sm text-gray-700 dark:text-neutral-300">
-              {[
-                "Zomato & Swiggy approved images",
-                "Access to entire photo library",
-                "High-quality food photos",
-                "Priority upload approval",
-                "Access to seasonal & trending photo packs",
-              ].map((feature, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-green-600 dark:text-green-400 mt-1" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <p className="text-sm text-gray-500 dark:text-gray-500 mt-10 text-center">
-          All plans include 18% GST. Cancel or upgrade anytime.
-        </p>
-      </div>
+        </motion.div>
+      )}
     </section>
   );
 }

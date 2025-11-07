@@ -47,10 +47,6 @@ const Card = ({ image, index }) => {
     }
   };
 
-  const handleEnhance = () => {
-    toast.success("AI enhancement applied! ✨ (Coming soon)");
-  };
-
   return (
     <motion.div
       key={image._id || index}
@@ -76,27 +72,8 @@ const Card = ({ image, index }) => {
             </div>
           )}
 
-          {/* Hover Buttons */}
-          <div
-            className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 
-                       transition-opacity duration-300"
-          >
+          <div className="absolute top-3 right-3 flex gap-2">
             <TooltipProvider delayDuration={100}>
-              {/* Enhance Button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={handleEnhance}
-                    aria-label={`Enhance ${image.title || "food"} image`}
-                    className="bg-white/80 dark:bg-black/60 backdrop-blur-sm p-2 rounded-full 
-                               hover:scale-110 active:scale-95 transition-transform shadow-sm"
-                  >
-                    <Sparkles className="w-5 h-5 text-black dark:text-white" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>AI Enhance (Coming soon)</TooltipContent>
-              </Tooltip>
-
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -115,13 +92,11 @@ const Card = ({ image, index }) => {
                 <TooltipContent>Download Image</TooltipContent>
               </Tooltip>
 
-              {/* More Options */}
               <ImageOptions imageId={image._id} />
             </TooltipProvider>
           </div>
         </div>
 
-        {/* Image Title */}
         {image.title && (
           <p
             className="mt-2 text-sm text-gray-700 dark:text-gray-300 truncate"
@@ -131,7 +106,6 @@ const Card = ({ image, index }) => {
           </p>
         )}
 
-        {/* SEO Metadata */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",

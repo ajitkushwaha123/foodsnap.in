@@ -19,20 +19,32 @@ export const loadRazorpayScript = () => {
   });
 };
 
-export const createOrder = async (amount) => {
+export const createOrder = async (amount, planKey) => {
   const res = await fetch("/api/payment", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ amount }),
+    body: JSON.stringify({ amount, planKey }),
   });
   return await res.json();
 };
 
 export const verifyPayment = async (paymentData) => {
-  const res = await fetch("/api/payment/verify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(paymentData),
-  });
-  return await res.json();
+  try {
+    const res = await fetch("/api/payment/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(paymentData), 
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData?.message || "Failed to verify payment");
+    }
+
+    return await res.json();
+  } catch (error) {
+    console.error("Verify Payment Error:", error);
+    return { status: "error", message: error.message };
+  }
 };
+

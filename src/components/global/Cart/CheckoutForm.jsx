@@ -100,7 +100,6 @@ const CheckoutForm = () => {
 
   return (
     <div className="w-full">
-      {/* Billing Section */}
       <div className="w-full shadow-md p-8 font-poppins bg-white dark:bg-[#121212] rounded-xl">
         <div className="flex justify-between items-center mb-4">
           <p className="flex items-center">
@@ -183,6 +182,7 @@ const CheckoutForm = () => {
             name={formik.values.name}
             email={formik.values.email}
             contact={formik.values.phone}
+            planKey={cartData?.key}
           />
         )}
       </div>

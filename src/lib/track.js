@@ -26,3 +26,12 @@ export async function track(input) {
     return { success: false, error: err.message };
   }
 }
+
+export const trackBtnClick = async (buttonName, location, userId = null) => {
+  return await track({
+    eventType: "button_click",
+    button_name: buttonName,
+    location: location,
+    userId: userId,
+  });
+};

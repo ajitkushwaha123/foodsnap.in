@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Sparkles,
-} from "lucide-react";
+import { ChevronsUpDown, LogOut, Sparkles } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -28,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useUser } from "@/store/hooks/useUser";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
@@ -45,7 +39,14 @@ export function NavUser() {
 
   const logoutUser = async () => {
     await logout();
-    router.push("/login");
+    router.push("/sign-in");
+  };
+
+  const handleClick = () => {
+    track("button_click", {
+      button_name: "Upgrade to Pro",
+      location: "Navbar Dropdown",
+    });
   };
 
   return (
@@ -147,10 +148,12 @@ export function NavUser() {
 
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <Sparkles />
-                    Upgrade to Pro
-                  </DropdownMenuItem>
+                  <Link href="/pricing" onClick={handleClick}>
+                    <DropdownMenuItem>
+                      <Sparkles />
+                      Upgrade to Pro
+                    </DropdownMenuItem>
+                  </Link>
                 </DropdownMenuGroup>
 
                 <DropdownMenuSeparator />

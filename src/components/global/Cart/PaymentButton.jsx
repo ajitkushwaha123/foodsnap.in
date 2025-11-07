@@ -5,11 +5,11 @@ import { createOrder, loadRazorpayScript, verifyPayment } from "@/lib/razorpay";
 import toast from "react-hot-toast";
 import { FaSpinner } from "react-icons/fa";
 
-const PaymentButton = ({ amount, name, email, contact }) => {
+const PaymentButton = ({ amount, name, email, contact, planKey }) => {
   const [loading, setLoading] = useState(false);
 
   const handlePayment = async () => {
-    if (!amount || !name || !email || !contact) {
+    if (!amount || !name || !email || !contact || !planKey) {
       toast.error("Missing required information.");
       return;
     }
@@ -18,27 +18,37 @@ const PaymentButton = ({ amount, name, email, contact }) => {
 
     const isLoaded = await loadRazorpayScript();
     if (!isLoaded) {
-      toast.error("Razorpay SDK failed to load.");
+      toast.error("Failed to load Razorpay SDK. Please try again.");
       setLoading(false);
       return;
     }
 
     try {
-      const order = await createOrder(amount * 100);
+      const order = await createOrder(amount * 100, planKey);
+
+      if (!order || !order.id) {
+        throw new Error("Order creation failed");
+      }
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
         name: "Foodsnap",
-        description: "Payment via Foodsnap",
+        description: `${planKey} Plan Payment`,
         order_id: order.id,
         handler: async (response) => {
-          const verification = await verifyPayment(response);
-          if (verification.status === "success") {
-            toast.success("Payment successful!");
-            window.location.href = `/success?orderId=${order.id}&txnId=${response.razorpay_payment_id}`;
-          } else {
+          try {
+            const verification = await verifyPayment({ ...response, planKey });
+
+            if (verification.success) {
+              toast.success("Payment successful!");
+              window.location.href = `/success?orderId=${order.id}&txnId=${response.razorpay_payment_id}`;
+            } else {
+              toast.error(verification.error || "Payment verification failed.");
+            }
+          } catch (err) {
+            console.error("Verification error:", err);
             toast.error("Payment verification failed.");
           }
         },
@@ -48,15 +58,21 @@ const PaymentButton = ({ amount, name, email, contact }) => {
           contact,
         },
         theme: {
-          color: "#6366f1",
+          color: "#000000",
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            toast("Payment cancelled.");
+          },
         },
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (err) {
-      console.error(err);
-      toast.error("Something went wrong!");
+      console.error("Payment Error:", err);
+      toast.error("Something went wrong while processing payment.");
     } finally {
       setLoading(false);
     }
@@ -66,10 +82,10 @@ const PaymentButton = ({ amount, name, email, contact }) => {
     <button
       onClick={handlePayment}
       disabled={loading}
-      className={`px-6 py-3 text-white rounded flex items-center justify-center gap-2 ${
+      className={`w-full md:w-auto px-6 py-3 text-white rounded-xl flex items-center justify-center gap-2 transition-all font-semibold ${
         loading
           ? "bg-gray-400 cursor-not-allowed"
-          : "bg-indigo-600 hover:bg-indigo-700"
+          : "bg-black hover:bg-gray-900"
       }`}
     >
       {loading ? (

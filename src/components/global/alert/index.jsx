@@ -43,19 +43,27 @@ export default function Alert({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className={`w-full ${styles.bg} rounded-md ${styles.text} px-6 py-3 flex items-center justify-between shadow-md`}
+      className={`w-full ${styles.bg} rounded-xl ${styles.text} 
+        px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-start sm:items-center 
+        justify-between gap-3 sm:gap-4 shadow-md`}
       role="alert"
     >
-      <div className="flex items-center gap-2 text-sm font-medium">
-        {icon || styles.defaultIcon}
-        {message}
+      <div className=" md:hidden">
+        <img src="./assets/low-balance-alert.png" />
+      </div>
+      <div className="flex items-start sm:items-center gap-2 text-sm sm:text-base font-medium leading-tight">
+        <span className="shrink-0 mt-0.5 sm:mt-0">
+          {icon || styles.defaultIcon}
+        </span>
+        <span className="break-words">{message}</span>
       </div>
 
       {showButton && (
         <Button
           type="button"
           variant="outline"
-          className={`text-sm ${styles.button} text-white`}
+          className={`w-full sm:w-auto text-sm sm:text-base ${styles.button} text-white font-medium 
+            rounded-lg transition-all duration-300`}
           onClick={() => router.push(redirectPath)}
         >
           {buttonText}

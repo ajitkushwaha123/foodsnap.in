@@ -1,41 +1,42 @@
 import mongoose from "mongoose";
 
-const planSchema = new mongoose.Schema(
+const PlanSchema = new mongoose.Schema(
   {
+    key: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
     name: {
       type: String,
       required: true,
-      trim: true,
-      unique: true,
+    },
+    price: {
+      type: String,
+      required: true,
     },
     description: {
       type: String,
-      default: "",
+      required: true,
     },
-    billingCycle: {
+    features: {
       type: [String],
-      enum: ["monthly", "yearly"],
-      default: ["monthly", "yearly"],
-    },
-    prices: {
-      monthly: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-      yearly: {
-        type: Number,
-        required: true,
-        min: 0,
+      required: true,
+      validate: {
+        validator: (arr) => arr.length > 0,
+        message: "At least one feature is required",
       },
     },
-    features: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
-    isPopular: {
+    button: {
+      type: String,
+      required: true,
+    },
+    link: {
+      type: String,
+      required: true,
+    },
+    highlight: {
       type: Boolean,
       default: false,
     },
@@ -43,20 +44,12 @@ const planSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    trialDays: {
-      type: Number,
-      default: 0,
-    },
     sortOrder: {
       type: Number,
       default: 0,
-    },
-    badge: {
-      type: String,
-      default: "",
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.Plan || mongoose.model("Plan", planSchema);
+export default mongoose.models.Plan || mongoose.model("Plan", PlanSchema);

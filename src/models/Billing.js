@@ -16,6 +16,10 @@ const billingSchema = new mongoose.Schema(
     phone: {
       type: String,
     },
+    planId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Plan",
+    },
   },
   { timestamps: true }
 );
