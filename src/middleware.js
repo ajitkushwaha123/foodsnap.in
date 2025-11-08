@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { verifyJwtToken } from "./lib/jwt";
 
+// Public pages that don’t require authentication
 const PUBLIC_ROUTES = ["/sign-in", "/sign-up", "/forgot-password"];
 
+// Public APIs accessible without login
 const PUBLIC_API = [
   "/api/login",
   "/api/register",
@@ -14,47 +16,47 @@ const PUBLIC_API = [
   "/api/plans",
 ];
 
+// Routes allowed even for "free" users
 const FREE_ALLOWED_ROUTES = [
   "/pricing",
-  "/api/plans",
-  "/api/payment",
-  "/api/payment/verify",
-  "/api/user/me",
-  "/api/support",
   "/support",
+  "/success",
   "/payment/cart",
   "/payment/checkout",
   "/payment/success",
-  "/success",
+  "/api/plans",
+  "/api/payment",
+  "/api/payment/verify",
   "/api/payment/billing",
+  "/api/user/me",
+  "/api/user/logout",
+  "/api/support",
+  "/api/*",
 ];
 
 export async function middleware(req) {
   const token = req.cookies.get("token")?.value;
   const { pathname } = req.nextUrl;
 
-  const isPublicPage = PUBLIC_ROUTES.some((p) => pathname.startsWith(p));
-  const isPublicApi = PUBLIC_API.some(
-    (p) => pathname === p || pathname.startsWith(p + "/")
-  );
+  const startsWithAny = (path, list) =>
+    list.some((r) => path === r || path.startsWith(r.replace("*", "")));
+
+  const redirectTo = (path) => NextResponse.redirect(new URL(path, req.url));
 
   if (!token) {
-    if (isPublicPage || isPublicApi) return NextResponse.next();
-
-    if (pathname.startsWith("/pricing")) {
-      const signInUrl = new URL("/sign-in", req.url);
-      signInUrl.searchParams.set("redirect", "/pricing");
-      return NextResponse.redirect(signInUrl);
+    if (startsWithAny(pathname, [...PUBLIC_ROUTES, ...PUBLIC_API])) {
+      return NextResponse.next();
     }
 
-    // redirect others to sign-in
-    const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(signInUrl);
+    const redirectUrl =
+      pathname.startsWith("/pricing") || pathname.startsWith("/support")
+        ? "/sign-in?redirect=/pricing"
+        : `/sign-in?redirect=${pathname}`;
+    return redirectTo(redirectUrl);
   }
 
   if (pathname === "/sign-in" || pathname === "/sign-up") {
-    return NextResponse.redirect(new URL("/", req.url));
+    return redirectTo("/");
   }
 
   try {
@@ -62,26 +64,21 @@ export async function middleware(req) {
     console.log("[MIDDLEWARE_DECODED]", decoded);
 
     if (!decoded) {
-      const res = NextResponse.redirect(new URL("/sign-in", req.url));
+      const res = redirectTo("/sign-in");
       res.cookies.delete("token");
       return res;
     }
 
-    const userPlan = decoded?.plan || "free";
-
+    const userPlan = decoded.plan || "free";
     if (userPlan === "free") {
-      const isFreeAllowed = FREE_ALLOWED_ROUTES.some((r) =>
-        pathname.startsWith(r)
-      );
-
-      if (!isFreeAllowed) {
-        const pricingUrl = new URL("/pricing", req.url);
-        return NextResponse.redirect(pricingUrl);
+      const isAllowed = startsWithAny(pathname, FREE_ALLOWED_ROUTES);
+      if (!isAllowed) {
+        return redirectTo("/pricing");
       }
     }
   } catch (err) {
     console.error("[JWT_ERROR]", err);
-    const res = NextResponse.redirect(new URL("/sign-in", req.url));
+    const res = redirectTo("/sign-in");
     res.cookies.delete("token");
     return res;
   }
@@ -91,6 +88,6 @@ export async function middleware(req) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|logo.png|videos/dashboard-video.mp4|public|api/auth).*)",
+    "/((?!_next/static|_next/image|favicon.ico|logo.png|videos/|public|api/auth).*)",
   ],
 };
