@@ -63,7 +63,7 @@ const Page = () => {
       )}
 
       {error && (
-        <div className="flex justify-center items-center w-full py-5 md:h-[400px]">
+        <div className="flex justify-center items-center w-full md:mt-10 md:h-[400px]">
           <EmptyState
             heading="Insufficient Credits"
             message="You’ve run out of credits. Upgrade your plan to continue downloading images."
