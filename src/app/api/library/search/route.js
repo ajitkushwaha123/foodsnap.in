@@ -1,14 +1,8 @@
 import { getUserId } from "@/helpers/auth";
 import dbConnect from "@/lib/dbConnect";
 import Image from "@/models/Image";
+import User from "@/models/User";
 import { NextResponse } from "next/server";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:5173",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Credentials": "true",
-};
 
 export const OPTIONS = async () =>
   NextResponse.json({}, { status: 204, headers: corsHeaders });
@@ -19,19 +13,55 @@ export const GET = async (req) => {
 
     const authResult = await getUserId(req);
     const userId = authResult?.userId;
+
     if (!userId) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401, headers: corsHeaders }
+        {
+          error: "Unauthorized. Please login to continue.",
+          action: {
+            redirect: "/login",
+            buttonText: "Login",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: "User not found. Contact support.",
+          action: {
+            redirect: "/support",
+            buttonText: "Contact Support",
+          },
+        },
+        { status: 404 }
+      );
+    }
+
+    if (user.credits <= 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Insufficient credits. Please upgrage your plan to continue searching.",
+          action: {
+            redirect: "/pricing",
+            buttonText: "View Plans",
+          },
+        },
+        { status: 402 }
       );
     }
 
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("search")?.trim();
+
     if (!query) {
       return NextResponse.json(
         { error: "Search query is required" },
-        { status: 400, headers: corsHeaders }
+        { status: 400 }
       );
     }
 
@@ -39,14 +69,18 @@ export const GET = async (req) => {
     const limit = 12;
     const skip = (page - 1) * limit;
 
-    // Filters
     const filters = { approved: false };
     const category = searchParams.get("category");
     const region = searchParams.get("region");
     const premium = searchParams.get("premium");
+
     if (category) filters.category = category;
     if (region) filters.region = region;
     if (premium === "true") filters.premium = true;
+
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const safeQuery = escapeRegex(query);
 
     const searchPipeline = [
       {
@@ -62,7 +96,11 @@ export const GET = async (req) => {
                 },
               },
               {
-                text: { query, path: "title", score: { boost: { value: 12 } } },
+                text: {
+                  query,
+                  path: "title",
+                  score: { boost: { value: 12 } },
+                },
               },
               {
                 text: {
@@ -92,7 +130,9 @@ export const GET = async (req) => {
           },
         },
       },
+
       { $match: filters },
+
       {
         $addFields: {
           exactTitleMatch: {
@@ -100,7 +140,7 @@ export const GET = async (req) => {
               {
                 $regexMatch: {
                   input: "$title",
-                  regex: new RegExp(`^${query}$`, "i"),
+                  regex: new RegExp(`^${safeQuery}$`, "i"),
                 },
               },
               15,
@@ -112,7 +152,7 @@ export const GET = async (req) => {
               {
                 $regexMatch: {
                   input: "$title",
-                  regex: new RegExp(`\\b${query}\\b`, "i"),
+                  regex: new RegExp(`\\b${safeQuery}\\b`, "i"),
                 },
               },
               5,
@@ -121,6 +161,7 @@ export const GET = async (req) => {
           },
         },
       },
+
       {
         $addFields: {
           score: {
@@ -135,7 +176,9 @@ export const GET = async (req) => {
           },
         },
       },
+
       { $sort: { score: -1 } },
+
       {
         $facet: {
           paginatedResults: [
@@ -163,28 +206,37 @@ export const GET = async (req) => {
     ];
 
     const aggregationResult = await Image.aggregate(searchPipeline);
+
     const results = aggregationResult[0]?.paginatedResults || [];
-    const total = aggregationResult[0]?.totalCount[0]?.count || 0;
+    const total = aggregationResult[0]?.totalCount?.[0]?.count || 0;
     const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json(
       {
         results,
-        page,
-        totalPages,
-        total,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-        limit,
-        message: "Search completed successfully",
+        pagination: {
+          page,
+          totalPages,
+          total,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+          limit,
+        },
+        message: `Found ${total} items for query "${query}"`,
       },
-      { status: 200, headers: corsHeaders }
+      { status: 200 }
     );
   } catch (error) {
     console.error("[SEARCH_ERROR]", error);
     return NextResponse.json(
-      { error: "An error occurred while processing your request." },
-      { status: 500, headers: corsHeaders }
+      {
+        error: "An error occurred while processing your request.",
+        action: {
+          redirect: "/support",
+          buttonText: "Contact Support",
+        },
+      },
+      { status: 500 }
     );
   }
 };

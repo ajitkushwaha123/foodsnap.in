@@ -23,6 +23,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 // This is sample data.
 const data = {
@@ -148,7 +149,9 @@ export function AppSidebar({ ...props }) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <img src={"/logo.png"} />
+        <Link href={"/"}>
+          <img src={"/logo.png"} />
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         {/* <NavMain items={data.navMain} /> */}

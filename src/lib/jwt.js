@@ -3,7 +3,6 @@ import { jwtVerify } from "jose";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// ✅ Server-side signing (Node.js only)
 export const signToken = (user) => {
   return jwt.sign(
     {

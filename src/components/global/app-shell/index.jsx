@@ -7,7 +7,7 @@ import { store } from "@/store";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/ui/site-header";
-import { Toaster } from "react-hot-toast";
+import Notification from "../notification";
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
@@ -30,18 +30,7 @@ export default function AppShell({ children }) {
             <AppSidebar variant="inset" />
             <SidebarInset className="flex flex-1 flex-col min-w-0">
               <SiteHeader />
-              <Toaster
-                position="top-center"
-                reverseOrder={true}
-                toastOptions={{
-                  style: {
-                    background: "#fff",
-                    color: "#000",
-                    borderRadius: "8px",
-                    padding: "12px 16px",
-                  },
-                }}
-              />
+              <Notification />
               <main className="flex-1 min-w-0">{children}</main>
             </SidebarInset>
           </div>

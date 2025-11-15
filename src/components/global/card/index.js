@@ -99,29 +99,12 @@ const Card = ({ image, index }) => {
 
         {image.title && (
           <p
-            className="mt-2 text-sm text-gray-700 dark:text-gray-300 truncate"
+            className="mt-2 text-sm text-gray-700 lineclamp-1 dark:text-gray-300 truncate"
             title={image.title}
           >
             {image.title}
           </p>
         )}
-
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "ImageObject",
-            contentUrl: image.image_url,
-            name: image.title || "Foodsnap Food Image",
-            description:
-              image.title ||
-              "High quality food image for restaurant menus - Zomato & Swiggy approved",
-            creator: {
-              "@type": "Organization",
-              name: "Foodsnap",
-              url: "https://foodsnap.in",
-            },
-          })}
-        </script>
       </div>
     </motion.div>
   );
