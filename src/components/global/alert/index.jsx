@@ -67,7 +67,7 @@ export default function Alert({
         <Button
           type="button"
           variant="outline"
-          className={`sm:w-auto text-sm sm:text-base ${styles.button} text-white font-medium 
+          className={`sm:w-auto  md:flex justify-center hidden items-center text-sm sm:text-base ${styles.button} text-white font-medium 
             rounded-md px-4 py-2 shadow hover:shadow-md transition-all duration-300`}
           onClick={() => router.push(action.redirect || "/pricing")}
         >
