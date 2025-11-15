@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 
 const Page = () => {
   const router = useRouter();
+
   const {
     results = [],
     loading,
@@ -32,7 +33,7 @@ const Page = () => {
     if (loading) return;
     if (!pagination?.hasNextPage) return;
     loadMore();
-  }, [loading, pagination?.hasNextPage, loadMore]);
+  }, [loading, pagination?.hasNextPage]);
 
   useEffect(() => {
     const node = loaderRef.current;
@@ -40,14 +41,16 @@ const Page = () => {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loading) handleLoadMore();
+        if (entries[0].isIntersecting && !loading && pagination?.hasNextPage) {
+          handleLoadMore();
+        }
       },
       { threshold: 0.5 }
     );
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [handleLoadMore, loading]);
+  }, [loading, pagination?.hasNextPage]);
 
   return (
     <div className="p-5">
@@ -60,18 +63,18 @@ const Page = () => {
       )}
 
       {error && (
-        <div className="flex justify-center items-center w-full md:h-[400px]">
+        <div className="flex justify-center items-center w-full py-5 md:h-[400px]">
           <EmptyState
-            heading="Error Occurred"
-            message="Something went wrong. Please try again."
-            actionText="Retry"
-            onAction={() => router.refresh()}
+            heading="Insufficient Credits"
+            message="You’ve run out of credits. Upgrade your plan to continue downloading images."
+            actionText="Upgrade Plan"
+            onAction={() => router.push("/pricing")}
           />
         </div>
       )}
 
       {showEmpty && (
-        <div className="flex justify-center bg-gray-50 rounded-md w-full h-[500px] items-center">
+        <div className="flex justify-center bg-gray-50 py-5 rounded-md w-full h-[500px] items-center">
           <EmptyState
             heading="No Results Found"
             message="Try adjusting your search. No matching images were found."
