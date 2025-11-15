@@ -42,13 +42,22 @@ export default function Alert({
 
   const { removeNotification } = useNotification();
 
+  const handleRedirect = () => {
+    router.push(action.redirect || "/pricing");
+  };
+
+  // 🔥 Auto-redirect if alert specifically requires redirect (ex: insufficient credits)
+  if (action?.redirect === "/pricing") {
+    router.push("/pricing");
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 8, scale: 0.98 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className={`w-full rounded-md p-4 sm:p-5 border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.08)] 
+      className={`w-full rounded-md p-4 sm:p-5 border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.08)]
         ring-1 ${styles.ring} ${styles.bg} ${styles.text} flex flex-row 
         gap-4 items-start sm:items-center justify-between`}
       role="alert"
@@ -63,13 +72,13 @@ export default function Alert({
         </p>
       </div>
 
-      {action && action?.redirect && action?.buttonText && (
+      {action?.redirect && action?.buttonText && (
         <Button
           type="button"
           variant="outline"
-          className={`sm:w-auto  md:flex justify-center hidden items-center text-sm sm:text-base ${styles.button} text-white font-medium 
-            rounded-md px-4 py-2 shadow hover:shadow-md transition-all duration-300`}
-          onClick={() => router.push(action.redirect || "/pricing")}
+          className={`hidden md:flex justify-center items-center text-sm sm:text-base ${styles.button}
+            text-white font-medium rounded-md px-4 py-2 shadow hover:shadow-md transition-all duration-300`}
+          onClick={handleRedirect}
         >
           {action.buttonText}
         </Button>

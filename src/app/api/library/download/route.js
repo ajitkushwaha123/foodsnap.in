@@ -64,10 +64,10 @@ export const GET = async (req) => {
     if (user.credits < 1) {
       return NextResponse.json(
         {
-          error: "You don’t have enough credits to download this image.",
+          error: "You are out of credits.",
           action: { redirect: "/pricing", buttonText: "Buy Credits" },
         },
-        { status: 403 }
+        { status: 402 }
       );
     }
 
