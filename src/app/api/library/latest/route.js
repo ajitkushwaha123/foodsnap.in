@@ -48,7 +48,7 @@ export const GET = async (req) => {
       );
     }
 
-    const matchStage = { approved: false };
+    const matchStage = { approved: true };
 
     const total = await Image.countDocuments(matchStage);
     const totalPages = Math.ceil(total / limit);
