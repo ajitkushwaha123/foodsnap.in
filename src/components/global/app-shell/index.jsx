@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Provider } from "react-redux";
 import { store } from "@/store";
@@ -14,6 +15,15 @@ export default function AppShell({ children }) {
 
   const AUTH_ROUTES = ["/sign-in", "/sign-up"];
   const isAuthPage = AUTH_ROUTES.includes(pathname);
+
+  useEffect(() => {
+    const disableRightClick = (e) => e.preventDefault();
+    document.addEventListener("contextmenu", disableRightClick);
+
+    return () => {
+      document.removeEventListener("contextmenu", disableRightClick);
+    };
+  }, []);
 
   return (
     <Provider store={store}>

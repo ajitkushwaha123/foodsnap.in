@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
@@ -38,18 +38,22 @@ export default function Alert({
   variant = "error",
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const styles = variantStyles[variant] || variantStyles.error;
 
   const { removeNotification } = useNotification();
 
-  const handleRedirect = () => {
-    router.push(action.redirect || "/pricing");
-  };
+  useEffect(() => {
+    if (action?.redirect === "/pricing" && pathname !== "/pricing") {
+      router.push("/pricing");
+    }
+  }, [action?.redirect, pathname]);
 
-  // 🔥 Auto-redirect if alert specifically requires redirect (ex: insufficient credits)
-  if (action?.redirect === "/pricing") {
-    router.push("/pricing");
-  }
+  const handleRedirect = () => {
+    if (pathname !== action.redirect) {
+      router.push(action.redirect);
+    }
+  };
 
   return (
     <motion.div
