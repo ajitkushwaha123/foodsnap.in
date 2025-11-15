@@ -12,20 +12,17 @@ const EmptyState = ({ heading, message, actionText, onAction }) => {
           />
         </div>
 
-        {/* Heading */}
         {heading && (
           <h3 className="mt-6 text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200">
             {heading}
           </h3>
         )}
 
-        {/* Message */}
         <p className="text-gray-600 dark:text-gray-400 text-sm mt-3 leading-relaxed px-2">
           {message ||
             "You are out of credits. Please upgrade your plan to continue."}
         </p>
 
-        {/* Action Button */}
         {actionText && (
           <Button onClick={onAction} className="mt-6 w-full sm:w-auto px-6">
             {actionText}
