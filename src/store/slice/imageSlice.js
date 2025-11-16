@@ -150,9 +150,68 @@ export const reportImage = createAsyncThunk(
   }
 );
 
+export const fetchDownloadedImages = createAsyncThunk(
+  "image/fetchDownloadedImages",
+  async ({ page = 1, limit = 10 }, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(
+        addNotification({
+          type: "info",
+          message: "Fetching your downloads...",
+          duration: 2000,
+        })
+      );
+
+      const res = await axios.get("/api/library/download/all", {
+        params: { page, limit },
+        withCredentials: true,
+        validateStatus: () => true,
+      });
+
+      if (res.status >= 400) {
+        const errorMsg =
+          res.data?.error || "Something went wrong while fetching downloads.";
+
+        dispatch(
+          addNotification({
+            type: "error",
+            message: errorMsg,
+            action: res.data?.action,
+            duration: 4000,
+          })
+        );
+
+        return rejectWithValue(errorMsg);
+      }
+
+      dispatch(
+        addNotification({
+          type: "success",
+          message: "Downloads fetched successfully.",
+          duration: 3000,
+        })
+      );
+
+      return res.data; // contains { downloads, pagination }
+    } catch (err) {
+      dispatch(
+        addNotification({
+          type: "error",
+          message: "Unexpected error occurred.",
+          duration: 4000,
+        })
+      );
+
+      return rejectWithValue("Unexpected error occurred");
+    }
+  }
+);
+
 const imageSlice = createSlice({
   name: "image",
   initialState: {
+    downloadedImages: [],
+    pagination: {},
     loading: false,
     error: null,
     success: false,
@@ -187,6 +246,31 @@ const imageSlice = createSlice({
         state.loading = false;
         state.error =
           action.payload || action.error?.message || "Report submission failed";
+      })
+      .addCase(fetchDownloadedImages.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(fetchDownloadedImages.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+
+        state.downloadedImages = action.payload.downloads || [];
+        state.pagination = action.payload.pagination || {
+          page: 1,
+          limit: 10,
+          totalCount: 0,
+          totalPages: 1,
+        };
+      })
+
+      .addCase(fetchDownloadedImages.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          action.payload ||
+          action.error?.message ||
+          "Fetching downloads failed";
       });
   },
 });

@@ -1,18 +1,15 @@
 import { getUserId } from "@/helpers/auth";
 import dbConnect from "@/lib/dbConnect";
+import Download from "@/models/Download";
 import Image from "@/models/Image";
 import User from "@/models/User";
 import { NextResponse } from "next/server";
 
 export const GET = async (req) => {
-  let userId = null;
-  let imageId = null;
-
   try {
     await dbConnect();
 
-    const authResult = await getUserId(req);
-    userId = authResult?.userId;
+    const { userId } = await getUserId(req);
 
     if (!userId) {
       return NextResponse.json(
@@ -25,7 +22,6 @@ export const GET = async (req) => {
     }
 
     const user = await User.findById(userId);
-
     if (!user) {
       return NextResponse.json(
         {
@@ -37,7 +33,7 @@ export const GET = async (req) => {
     }
 
     const { searchParams } = new URL(req.url);
-    imageId = searchParams.get("imageId");
+    const imageId = searchParams.get("imageId");
 
     if (!imageId) {
       return NextResponse.json(
@@ -61,6 +57,34 @@ export const GET = async (req) => {
       );
     }
 
+    const existingDownload = await Download.findOne({
+      userId,
+      imageId,
+    });
+
+    if (existingDownload) {
+      const fileRes = await fetch(image.image_url);
+
+      if (!fileRes.ok) {
+        return NextResponse.json(
+          {
+            error: "Failed to fetch image file.",
+            action: { redirect: "/support", buttonText: "Contact Support" },
+          },
+          { status: 500 }
+        );
+      }
+
+      return new NextResponse(fileRes.body, {
+        status: 200,
+        headers: {
+          "Content-Disposition": `attachment; filename="${image.title}.jpg"`,
+          "Content-Type":
+            fileRes.headers.get("content-type") || "application/octet-stream",
+        },
+      });
+    }
+
     if (user.credits < 1) {
       return NextResponse.json(
         {
@@ -71,8 +95,14 @@ export const GET = async (req) => {
       );
     }
 
-    user.totalImagesDownloaded += 1;
+    const newDownload = await Download.create({
+      userId,
+      imageId,
+      creditsUsed: 1,
+    });
+
     user.credits -= 1;
+    user.totalImagesDownloaded += 1;
     await user.save();
 
     image.downloads += 1;
@@ -81,6 +111,8 @@ export const GET = async (req) => {
     const fileRes = await fetch(image.image_url);
 
     if (!fileRes.ok) {
+      await Download.findByIdAndDelete(newDownload._id);
+
       user.credits += 1;
       user.totalImagesDownloaded -= 1;
       await user.save();
@@ -88,15 +120,19 @@ export const GET = async (req) => {
       image.downloads -= 1;
       await image.save();
 
-      throw new Error("Failed to retrieve image file.");
+      return NextResponse.json(
+        {
+          error: "Failed to retrieve image file.",
+          action: { redirect: "/support", buttonText: "Contact Support" },
+        },
+        { status: 500 }
+      );
     }
 
     return new NextResponse(fileRes.body, {
       status: 200,
       headers: {
-        "Content-Disposition": `attachment; filename="${
-          image.title || "download.jpg"
-        }.jpg"`,
+        "Content-Disposition": `attachment; filename="${image.title}.jpg"`,
         "Content-Type":
           fileRes.headers.get("content-type") || "application/octet-stream",
       },
@@ -104,8 +140,7 @@ export const GET = async (req) => {
   } catch (err) {
     return NextResponse.json(
       {
-        error:
-          err.message || "Something went wrong while processing your download.",
+        error: err.message || "Something went wrong while processing download.",
         action: { redirect: "/support", buttonText: "Contact Support" },
       },
       { status: 500 }

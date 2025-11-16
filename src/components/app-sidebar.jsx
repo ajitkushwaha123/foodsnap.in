@@ -8,10 +8,9 @@ import {
   Command,
   Frame,
   GalleryVerticalEnd,
-  Map,
-  PieChart,
   Settings2,
   SquareTerminal,
+  Download,
 } from "lucide-react";
 
 import { NavProjects } from "@/components/nav-projects";
@@ -141,6 +140,11 @@ const data = {
       name: "Support",
       url: "/support",
       icon: Frame,
+    },
+    {
+      name: "Downloads",
+      url: "/downloads",
+      icon: Download,
     },
   ],
 };
