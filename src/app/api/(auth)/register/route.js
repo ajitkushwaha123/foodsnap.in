@@ -37,7 +37,7 @@ export const POST = async (req) => {
       name,
       phone,
       password: hashedPassword,
-      credits: 2,
+      credits: 0,
       isAdmin: false,
       subscription: {
         isActive: false,
