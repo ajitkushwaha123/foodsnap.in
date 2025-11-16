@@ -86,6 +86,70 @@ export const downloadImage = createAsyncThunk(
   }
 );
 
+export const reportImage = createAsyncThunk(
+  "image/report",
+  async ({ imageId, reason }, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(
+        addNotification({
+          type: "info",
+          message: "Reporting Image...",
+          duration: 2000,
+        })
+      );
+
+      const res = await axios.post(
+        "/api/image/report",
+        { imageId },
+        {
+          withCredentials: true,
+          validateStatus: () => true,
+        }
+      );
+
+      if (!res.data || res.status >= 400) {
+        const errorMsg = res.data?.error || "Something went wrong.";
+        const action = res.data?.action;
+
+        dispatch(
+          addNotification({
+            type: "error",
+            message: errorMsg,
+            action: action || null,
+            duration: 4000,
+          })
+        );
+
+        return rejectWithValue(errorMsg);
+      }
+
+      dispatch(
+        addNotification({
+          type: "success",
+          message: "Report submitted successfully.",
+          duration: 3000,
+        })
+      );
+
+      return res.data;
+    } catch (err) {
+      dispatch(
+        addNotification({
+          type: "error",
+          message: "Unexpected error occurred.",
+          action: {
+            redirect: "/support",
+            buttonText: "Contact Support",
+          },
+          duration: 4000,
+        })
+      );
+
+      return rejectWithValue("Unexpected error occurred");
+    }
+  }
+);
+
 const imageSlice = createSlice({
   name: "image",
   initialState: {
@@ -109,6 +173,20 @@ const imageSlice = createSlice({
         state.loading = false;
         state.error =
           action.payload || action.error?.message || "Download failed";
+      })
+      .addCase(reportImage.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.success = false;
+      })
+      .addCase(reportImage.fulfilled, (state) => {
+        state.loading = false;
+        state.success = true;
+      })
+      .addCase(reportImage.rejected, (state, action) => {
+        state.loading = false;
+        state.error =
+          action.payload || action.error?.message || "Report submission failed";
       });
   },
 });

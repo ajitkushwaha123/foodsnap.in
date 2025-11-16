@@ -19,6 +19,7 @@ const ImageSchema = new mongoose.Schema(
     food_type: { type: String, trim: true },
     downloads: { type: Number, default: 0, min: 0 },
     source: { type: String, trim: true },
+    latest: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

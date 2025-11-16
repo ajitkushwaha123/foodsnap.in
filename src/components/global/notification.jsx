@@ -15,7 +15,7 @@ const Notification = () => {
 
   return (
     <div>
-      {notifications?.length > 0 && note.type === "error" && (
+      {notifications?.length > 0 && (
         <Alert
           message={note.message}
           variant={note.type}

@@ -12,18 +12,6 @@ const reportSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    reason: {
-      type: String,
-      required: true,
-      enum: [
-        "spam",
-        "rejected_on_zomato",
-        "rejected_on_swiggy",
-        "copyright_violation",
-        "rejected_on_both",
-        "other",
-      ],
-    },
     status: {
       type: String,
       default: "pending",

@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { downloadImage } from "../slice/imageSlice";
+import { downloadImage, reportImage } from "../slice/imageSlice";
 
 export const useImage = () => {
   const dispatch = useDispatch();
@@ -9,10 +9,16 @@ export const useImage = () => {
     await dispatch(downloadImage({ imageId })).unwrap();
   };
 
+  const handleReportImage = async (imageId) => {
+    console.log("imageId in handleReportImage:", imageId);
+    await dispatch(reportImage({ imageId })).unwrap();
+  };
+
   return {
     loading,
     error,
     success,
     handleDownloadImage,
+    handleReportImage,
   };
 };

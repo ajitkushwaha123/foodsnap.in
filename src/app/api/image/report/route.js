@@ -1,40 +1,63 @@
 import { getUserId } from "@/helpers/auth";
 import dbConnect from "@/lib/dbConnect";
+import Image from "@/models/Image";
 import Report from "@/models/Report";
 import { NextResponse } from "next/server";
 
 export const POST = async (req) => {
   try {
     await dbConnect();
+
     const { userId } = await getUserId();
 
     if (!userId) {
       return NextResponse.json(
         {
-          message: "User not found",
+          error: "Unauthorized. Please login to continue.",
+          action: {
+            redirect: "/login",
+            buttonText: "Login",
+          },
         },
-        {
-          status: 404,
-        }
+        { status: 401 }
       );
     }
 
-    const { key, imageId } = await req.json();
+    const { imageId } = await req.json();
 
-    if (!key || !imageId) {
+    if (!imageId) {
       return NextResponse.json(
         {
-          message: "Missing required fields",
+          error: "Missing required fields.",
+          action: {
+            redirect: "/support",
+            buttonText: "Get Help",
+          },
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
-    const newReport = Report({
+    const image = await Image.findById(imageId);
+
+    if (!image) {
+      return NextResponse.json(
+        {
+          error: "Image not found.",
+          action: {
+            redirect: "/",
+            buttonText: "Explore Images",
+          },
+        },
+        { status: 404 }
+      );
+    }
+
+    image.approved = false;
+    await image.save();
+
+    const newReport = new Report({
       userId,
-      reason: key,
       imageId,
       status: "pending",
     });
@@ -45,18 +68,18 @@ export const POST = async (req) => {
       {
         message: "Report submitted successfully",
       },
-      {
-        status: 201,
-      }
+      { status: 201 }
     );
   } catch (err) {
     return NextResponse.json(
       {
-        message: err.message || "Internal Server Error",
+        error: err.message || "Internal Server Error",
+        action: {
+          redirect: "/support",
+          buttonText: "Contact Support",
+        },
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 };

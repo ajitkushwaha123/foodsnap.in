@@ -6,26 +6,26 @@ export const fetchSearchResults = createAsyncThunk(
   "search/fetchResults",
   async ({ query, page, limit = 12 }, { dispatch, rejectWithValue }) => {
     try {
-      dispatch(
-        addNotification({
-          type: "info",
-          message: `Searching for "${query}"...`,
-          duration: 2000,
-        })
-      );
+      // dispatch(
+      //   addNotification({
+      //     type: "info",
+      //     message: `Searching for "${query}"...`,
+      //     duration: 2000,
+      //   })
+      // );
 
       const res = await axios.get("/api/library/search", {
         params: { search: query, page, limit },
         withCredentials: true,
       });
 
-      dispatch(
-        addNotification({
-          type: "success",
-          message: res.data.message || "Search completed successfully",
-          duration: 3000,
-        })
-      );
+      // dispatch(
+      //   addNotification({
+      //     type: "success",
+      //     message: res.data.message || "Search completed successfully",
+      //     duration: 3000,
+      //   })
+      // );
 
       return res.data;
     } catch (err) {
@@ -53,13 +53,13 @@ export const fetchLatestResults = createAsyncThunk(
   "search/fetchLatest",
   async ({ page = 1, limit = 12, seed }, { dispatch, rejectWithValue }) => {
     try {
-      dispatch(
-        addNotification({
-          type: "info",
-          message: "Fetching latest images...",
-          duration: 2000,
-        })
-      );
+      // dispatch(
+      //   addNotification({
+      //     type: "info",
+      //     message: "Fetching latest images...",
+      //     duration: 2000,
+      //   })
+      // );
 
       const res = await axios.get("/api/library/latest", {
         params: { page, limit, seed },
@@ -85,13 +85,13 @@ export const fetchLatestResults = createAsyncThunk(
         return rejectWithValue(errorMessage);
       }
 
-      dispatch(
-        addNotification({
-          type: "success",
-          message: res.data.message || "Latest images loaded successfully!",
-          duration: 3000,
-        })
-      );
+      // dispatch(
+      //   addNotification({
+      //     type: "success",
+      //     message: res.data.message || "Latest images loaded successfully!",
+      //     duration: 3000,
+      //   })
+      // );
 
       return res.data;
     } catch (err) {

@@ -68,7 +68,7 @@ export const GET = async (req) => {
     const limit = 12;
     const skip = (page - 1) * limit;
 
-    const filters = {};
+    const filters = { approved: true };
     const category = searchParams.get("category");
     const region = searchParams.get("region");
     const premium = searchParams.get("premium");
