@@ -44,8 +44,7 @@ export const GET = async (req) => {
     if (user.credits <= 0) {
       return NextResponse.json(
         {
-          error:
-            "Insufficient credits. Please upgrage your plan to continue searching.",
+          error: "You are out of credits.",
           action: {
             redirect: "/pricing",
             buttonText: "View Plans",
