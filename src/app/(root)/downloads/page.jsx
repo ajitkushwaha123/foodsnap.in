@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useImage } from "@/store/hooks/useImage";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, RefreshCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageIcon, RefreshCcw } from "lucide-react";
 import ImageCard from "@/components/search/image-card";
 import { useRouter } from "next/navigation";
 
@@ -13,7 +13,6 @@ const Page = () => {
     useImage();
 
   const router = useRouter();
-
   const [page, setPage] = useState(1);
   const limit = 12;
 
@@ -28,18 +27,16 @@ const Page = () => {
     setPage(newPage);
   };
 
-  // Refresh button
   const fetchPage = () => {
     fetchAllDownloadedImages(page, limit);
   };
 
-  // Dynamic pagination buttons
   const renderPageButtons = () => {
     const totalPages = pagination?.totalPages || 1;
-    const buttons = [];
+    const btns = [];
 
     for (let i = 1; i <= totalPages; i++) {
-      buttons.push(
+      btns.push(
         <Button
           key={i}
           variant={i === page ? "default" : "outline"}
@@ -53,8 +50,24 @@ const Page = () => {
       );
     }
 
-    return buttons;
+    return btns;
   };
+
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {Array.from({ length: limit }).map((_, i) => (
+        <div className="cursor-pointer">
+          <div className="overflow-hidden border rounded-md p-3 border-gray-200 dark:border-gray-800 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-all">
+            <div className="relative rounded-md overflow-hidden shadow-sm">
+              <div className="w-full h-48 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <ImageIcon className="text-gray-400 w-8 h-8" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <motion.div
@@ -80,12 +93,14 @@ const Page = () => {
           className="flex items-center gap-2 rounded-md border-gray-300"
         >
           <RefreshCcw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          <span>Refresh</span>
+          <span>{loading ? "Refreshing..." : "Refresh"}</span>
         </Button>
       </div>
 
       <div>
-        {downloadedImages.length === 0 ? (
+        {loading ? (
+          <LoadingSkeleton />
+        ) : downloadedImages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-100">
               <svg

@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import Download from "@/models/Download";
 import User from "@/models/User";
 import { NextResponse } from "next/server";
+import Image from "@/models/Image";
 
 export const GET = async (req) => {
   try {
