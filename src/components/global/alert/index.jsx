@@ -46,6 +46,7 @@ export default function Alert({
   useEffect(() => {
     if (action?.redirect === "/pricing" && pathname !== "/pricing") {
       router.push("/pricing");
+      removeNotification();
     }
   }, [action?.redirect, pathname]);
 
