@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { ImageIcon, Download, Flag, Loader2 } from "lucide-react";
+import {
+  ImageIcon,
+  Download,
+  MessageSquareWarning,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useImage } from "@/store/hooks/useImage";
 import { useUser } from "@/store/hooks/useUser";
@@ -65,7 +70,10 @@ const ImageCard = ({ title, img, imageId }) => {
                           className="animate-spin text-red-500"
                         />
                       ) : (
-                        <Flag size={16} className="text-red-600" />
+                        <MessageSquareWarning
+                          size={16}
+                          className="text-red-600"
+                        />
                       )}
                     </Button>
                   </TooltipTrigger>
@@ -115,12 +123,12 @@ const ImageCard = ({ title, img, imageId }) => {
                   className="w-full h-full object-cover"
                 />
 
-                {isFreeUser && (
+                {/* {isFreeUser && (
                   <img
                     src="/assets/logo-transparent.png"
                     className="absolute bottom-0 right-0 w-32 opacity-15 pointer-events-none select-none"
                   />
-                )}
+                )} */}
               </div>
             ) : (
               <div className="w-full h-48 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
