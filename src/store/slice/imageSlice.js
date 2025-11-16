@@ -220,30 +220,24 @@ const imageSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(downloadImage.pending, (state) => {
-        state.loading = true;
         state.error = null;
         state.success = false;
       })
       .addCase(downloadImage.fulfilled, (state) => {
-        state.loading = false;
         state.success = true;
       })
       .addCase(downloadImage.rejected, (state, action) => {
-        state.loading = false;
         state.error =
           action.payload || action.error?.message || "Download failed";
       })
       .addCase(reportImage.pending, (state) => {
-        state.loading = true;
         state.error = null;
         state.success = false;
       })
       .addCase(reportImage.fulfilled, (state) => {
-        state.loading = false;
         state.success = true;
       })
       .addCase(reportImage.rejected, (state, action) => {
-        state.loading = false;
         state.error =
           action.payload || action.error?.message || "Report submission failed";
       })
