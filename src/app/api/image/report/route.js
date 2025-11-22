@@ -23,7 +23,8 @@ export const POST = async (req) => {
       );
     }
 
-    const { imageId } = await req.json();
+    const body = await req.json();
+    const { imageId } = body || {};
 
     if (!imageId) {
       return NextResponse.json(
@@ -53,16 +54,16 @@ export const POST = async (req) => {
       );
     }
 
+    // mark as unapproved
     image.approved = false;
     await image.save();
 
-    const newReport = new Report({
+    // create report
+    await Report.create({
       userId,
       imageId,
       status: "pending",
     });
-
-    await newReport.save();
 
     return NextResponse.json(
       {
@@ -71,6 +72,8 @@ export const POST = async (req) => {
       { status: 201 }
     );
   } catch (err) {
+    console.error("Report API Error:", err);
+
     return NextResponse.json(
       {
         error: err.message || "Internal Server Error",
