@@ -54,11 +54,9 @@ export const POST = async (req) => {
       );
     }
 
-    // mark as unapproved
     image.approved = false;
     await image.save();
 
-    // create report
     await Report.create({
       userId,
       imageId,
