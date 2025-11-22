@@ -198,17 +198,9 @@ export const GET = async (req) => {
             { $limit: limit },
             {
               $project: {
+                _id: 1,
                 title: 1,
-                manual_tags: 1,
-                auto_tags: 1,
-                cuisine: 1,
                 image_url: 1,
-                category: 1,
-                region: 1,
-                quality_score: 1,
-                popularity_score: 1,
-                likes: 1,
-                score: 1,
               },
             },
           ],
@@ -234,7 +226,7 @@ export const GET = async (req) => {
           hasPrevPage: page > 1,
           limit,
         },
-        message: `Found ${total} items for query "${query}"`,
+        message: `Couldn't find results for "${query}". Try Submitting a Request.`,
       },
       { status: 200 }
     );

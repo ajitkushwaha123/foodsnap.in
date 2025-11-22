@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Ticket from "@/models/Ticket";
 import dbConnect from "@/lib/dbConnect";
 import { getUserId } from "@/helpers/auth";
+import User from "@/models/User";
 
 export async function POST(req) {
   try {
@@ -24,9 +25,25 @@ export async function POST(req) {
       );
     }
 
-    const { name, email, phone, subject, message } = body;
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: "User not found.",
+          action: {
+            redirect: "/login",
+            buttonText: "Login",
+          },
+        },
+        { status: 404 }
+      );
+    }
 
-    if (!name || !email || !phone || !subject || !message) {
+    let { name, email, phone, subject, message } = body;
+    if (!name) name = user.name;
+    if (!phone) phone = user.phone;
+
+    if (!phone || !subject || !message) {
       return NextResponse.json(
         {
           error: "All fields are required.",

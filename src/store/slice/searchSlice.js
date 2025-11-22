@@ -19,13 +19,14 @@ export const fetchSearchResults = createAsyncThunk(
         withCredentials: true,
       });
 
-      // dispatch(
-      //   addNotification({
-      //     type: "success",
-      //     message: res.data.message || "Search completed successfully",
-      //     duration: 3000,
-      //   })
-      // );
+      dispatch(
+        addNotification({
+          type: "info",
+          message: res.data.message || `Search results for "${query}" loaded!`,
+          duration: 3000,
+          notification_type: "image-request",
+        })
+      );
 
       return res.data;
     } catch (err) {

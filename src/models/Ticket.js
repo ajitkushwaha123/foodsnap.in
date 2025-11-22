@@ -20,7 +20,6 @@ const TicketSchema = new mongoose.Schema(
     details: {
       name: {
         type: String,
-        required: true,
         trim: true,
       },
       phone: {
@@ -30,9 +29,7 @@ const TicketSchema = new mongoose.Schema(
       },
       email: {
         type: String,
-        required: true,
         lowercase: true,
-        trim: true,
       },
       subject: {
         type: String,

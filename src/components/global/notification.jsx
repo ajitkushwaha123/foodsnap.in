@@ -21,6 +21,7 @@ const Notification = () => {
           variant={note.type}
           icon={note.icon}
           action={note.action}
+          type={note.notification_type}
         />
       )}
     </div>

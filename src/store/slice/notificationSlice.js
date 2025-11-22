@@ -12,7 +12,13 @@ const notificationSlice = createSlice({
       reducer(state, action) {
         state.notifications = [action.payload];
       },
-      prepare({ type = "info", message, duration = 3000, action = {} }) {
+      prepare({
+        type = "info",
+        message,
+        duration = 3000,
+        action = {},
+        notification_type = "",
+      }) {
         return {
           payload: {
             id: nanoid(),
@@ -20,6 +26,7 @@ const notificationSlice = createSlice({
             message,
             duration,
             action,
+            notification_type,
           },
         };
       },

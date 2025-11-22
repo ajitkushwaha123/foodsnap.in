@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle2, Info, X } from "lucide-react";
 import { useNotification } from "@/store/hooks/useNotification";
+import RequestTicketButton from "@/components/ticket/request-ticket-button";
 
 const variantStyles = {
   error: {
@@ -36,6 +37,7 @@ export default function Alert({
   icon,
   action = {},
   variant = "error",
+  type = "",
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -88,6 +90,8 @@ export default function Alert({
           {action.buttonText}
         </Button>
       )}
+
+      {type === "image-request" && <RequestTicketButton />}
 
       <div
         onClick={removeNotification}
