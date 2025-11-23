@@ -40,7 +40,7 @@ const PaymentButton = ({ amount, name, email, contact, planKey }) => {
 
           if (verification.success === true) {
             toast.success("Payment successful!");
-            window.location.href = `/`;
+            window.location.href = `/success?orderId=${response.razorpay_order_id}&txnId=${response.razorpay_payment_id}`;
           } else {
             toast.error("Payment verification failed.");
           }
