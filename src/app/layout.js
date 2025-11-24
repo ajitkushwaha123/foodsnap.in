@@ -27,15 +27,16 @@ export default function RootLayout({ children }) {
         <SpeedInsights />
 
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-5HJD7C1GQ4"
-          strategy="afterInteractive"
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-DDZXQ7G4VW"
         />
+
         <Script id="google-analytics" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-5HJD7C1GQ4');
+            gtag('config', 'G-DDZXQ7G4VW');
           `}
         </Script>
 
@@ -53,6 +54,7 @@ export default function RootLayout({ children }) {
             fbq('track', 'PageView');
           `}
         </Script>
+
         <noscript>
           <img
             height="1"
