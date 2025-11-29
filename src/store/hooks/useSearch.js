@@ -12,8 +12,17 @@ import {
 export const useSearch = () => {
   const dispatch = useDispatch();
 
-  const { query, page, limit, seed, results, pagination, loading, error } =
-    useSelector((state) => state.search);
+  const {
+    query,
+    page,
+    limit,
+    seed,
+    results,
+    pagination,
+    loading,
+    error,
+    openStudio,
+  } = useSelector((state) => state.search);
 
   const runSearch = () => {
     if (!query) return;
@@ -48,6 +57,7 @@ export const useSearch = () => {
     pagination,
     loading,
     error,
+    openStudio,
     runSearch,
     loadMore,
     updateQuery: (v) => dispatch(setQuery(v)),

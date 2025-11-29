@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import StudioButton from "./global/ai-studio/StudioButton";
 
 export function Breadcrumbs() {
   const pathname = usePathname();
@@ -11,30 +12,35 @@ export function Breadcrumbs() {
   console.log("segments", segments);
 
   return (
-    <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-      <Link href="/" className="hover:text-foreground">
-        Home
-      </Link>
+    <div className="flex justify-between w-full items-center">
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground">
+          Home
+        </Link>
 
-      {segments.map((segment, idx) => {
-        const href = "/" + segments.slice(0, idx + 1).join("/");
-        const isLast = idx === segments.length - 1;
+        {segments.map((segment, idx) => {
+          const href = "/" + segments.slice(0, idx + 1).join("/");
+          const isLast = idx === segments.length - 1;
 
-        return (
-          <span key={href} className="flex items-center gap-1">
-            <ChevronRight size={14} className="text-muted-foreground" />
-            {isLast ? (
-              <span className="text-foreground font-medium capitalize">
-                {decodeURIComponent(segment)}
-              </span>
-            ) : (
-              <Link href={href} className="hover:text-foreground capitalize">
-                {decodeURIComponent(segment)}
-              </Link>
-            )}
-          </span>
-        );
-      })}
-    </nav>
+          return (
+            <span key={href} className="flex items-center gap-1">
+              <ChevronRight size={14} className="text-muted-foreground" />
+              {isLast ? (
+                <span className="text-foreground font-medium capitalize">
+                  {decodeURIComponent(segment)}
+                </span>
+              ) : (
+                <Link href={href} className="hover:text-foreground capitalize">
+                  {decodeURIComponent(segment)}
+                </Link>
+              )}
+            </span>
+          );
+        })}
+      </nav>
+      <div className="hidden md:block">
+        <StudioButton />
+      </div>
+    </div>
   );
 }

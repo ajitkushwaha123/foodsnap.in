@@ -28,6 +28,8 @@ export const GET = async (req) => {
     }
 
     const user = await User.findById(userId);
+
+    console.log("Fetched User for Library:", user);
     if (!user) {
       return NextResponse.json(
         {
@@ -37,6 +39,8 @@ export const GET = async (req) => {
         { status: 404 }
       );
     }
+
+    console.log("User Credits:", user.credits);
 
     if (user.credits <= 0) {
       return NextResponse.json(

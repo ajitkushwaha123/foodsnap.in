@@ -120,6 +120,8 @@ const ImageCard = ({ title, img, imageId }) => {
                 <img
                   src={img}
                   alt={title}
+                  data-allow-drag
+                  draggable="true"
                   className="w-full h-full object-cover"
                 />
 

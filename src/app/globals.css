@@ -7,15 +7,6 @@ body {
   font-family: "Poppins", sans-serif;
 }
 
-img {
-  user-drag: none;
-  -webkit-user-drag: none;
-  pointer-events: none;
-}
-
-img {
-  -webkit-touch-callout: none;
-}
 
 @theme inline {
   --color-background: var(--background);

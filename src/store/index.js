@@ -5,6 +5,7 @@ import searchReducer from "./slice/searchSlice";
 import notificationReducer from "./slice/notificationSlice";
 import imageReducer from "./slice/imageSlice";
 import ticketReducer from "./slice/ticketSlice";
+import studioReducer from "./slice/studioSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,5 +15,6 @@ export const store = configureStore({
     notifications: notificationReducer,
     image: imageReducer,
     tickets: ticketReducer,
+    studio: studioReducer,
   },
 });

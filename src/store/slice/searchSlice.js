@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { addNotification } from "./notificationSlice";
+import { set } from "mongoose";
 
 export const fetchSearchResults = createAsyncThunk(
   "search/fetchResults",
@@ -129,6 +130,7 @@ const searchSlice = createSlice({
     pagination: null,
     loading: false,
     error: null,
+    openStudio: false,
   },
 
   reducers: {
@@ -149,6 +151,9 @@ const searchSlice = createSlice({
       state.results = [];
       state.pagination = null;
       state.error = null;
+    },
+    setOpenStudio: (state, action) => {
+      state.openStudio = action.payload;
     },
   },
 
@@ -203,7 +208,13 @@ const searchSlice = createSlice({
   },
 });
 
-export const { setQuery, setPage, setLimit, setSeed, clearSearch } =
-  searchSlice.actions;
+export const {
+  setQuery,
+  setPage,
+  setLimit,
+  setSeed,
+  clearSearch,
+  setOpenStudio,
+} = searchSlice.actions;
 
 export default searchSlice.reducer;
