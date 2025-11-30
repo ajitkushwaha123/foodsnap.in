@@ -2,7 +2,7 @@ export const plans = [
   {
     key: "trial",
     name: "Trial Plan",
-    price: "₹249",
+    price: "299",
     description: "Try Foodsnap with 15 image downloads.",
     features: [
       "15 image downloads",
@@ -13,8 +13,8 @@ export const plans = [
     link: "/payment/cart?plan=trial",
     highlight: false,
     duration: 30,
-    amount: 249,
-    discountedAmount: 249,
+    amount: 299,
+    discountedAmount: 299,
     discountPercentage: 0,
     taxPercentage: 18,
     downloads: 15,
