@@ -3,10 +3,10 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Upload, Sparkles, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useDispatch } from "react-redux";
 import { setOpenStudio } from "@/store/slice/searchSlice";
 import { useStudio } from "@/store/hooks/useStudio";
+import PromptBuilder from "../propmt-input";
 
 const StudioSidebar = () => {
   const dispatch = useDispatch();
@@ -15,6 +15,7 @@ const StudioSidebar = () => {
   const [images, setImages] = useState([]);
   const [prompt, setPrompt] = useState("");
   const [dragCounter, setDragCounter] = useState(0);
+
   const dropRef = useRef(null);
   const resultRef = useRef(null);
   const inputRef = useRef(null);
@@ -56,9 +57,7 @@ const StudioSidebar = () => {
           type: blob.type || "image/png",
         });
         handleFiles([file]);
-      } catch (err) {
-        console.error("Error fetching internal image data:", err);
-      }
+      } catch (err) {}
     }
   };
 
@@ -146,15 +145,12 @@ const StudioSidebar = () => {
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-          className={`
-            border-2 border-dashed rounded-xl h-36 flex flex-col items-center justify-center 
-            transition cursor-pointer
+          className={`border-2 border-dashed rounded-xl h-36 flex flex-col items-center justify-center transition cursor-pointer
             ${
               isDraggingOver
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/10"
-                : "border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-zinc-800"
-            }
-          `}
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-300 hover:bg-gray-50"
+            }`}
         >
           <Upload
             className={`w-10 h-10 ${
@@ -189,8 +185,7 @@ const StudioSidebar = () => {
                 />
                 <button
                   onClick={() => removeImage(i)}
-                  className="absolute top-2 right-2 bg-black bg-opacity-40 
-                    text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                  className="absolute top-2 right-2 bg-black bg-opacity-40 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
                 >
                   <X size={15} />
                 </button>
@@ -199,15 +194,7 @@ const StudioSidebar = () => {
           </div>
         )}
 
-        <div>
-          <label className="text-sm font-medium text-gray-700">Prompt</label>
-          <Textarea
-            placeholder="Describe what you want the AI to generate..."
-            className="mt-2 bg-white border-gray-300 text-gray-900"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-          />
-        </div>
+        <PromptBuilder value={prompt} onChange={(p) => setPrompt(p)} />
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-10">
@@ -243,9 +230,7 @@ const StudioSidebar = () => {
                         link.click();
                         URL.revokeObjectURL(url);
                       }}
-                      className="absolute bottom-3 right-3 bg-black text-white 
-                        text-xs px-3 py-1 rounded-md opacity-0 
-                        group-hover:opacity-100 transition-all shadow-md"
+                      className="absolute bottom-3 right-3 bg-black text-white text-xs px-3 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all shadow-md"
                     >
                       Download
                     </button>
@@ -273,9 +258,7 @@ const StudioSidebar = () => {
         </Button>
 
         <Button
-          className="w-1/2 py-5 text-md font-semibold bg-gradient-to-r 
-            from-[#4ade80] to-[#22c55e] hover:from-[#22c55e] hover:to-[#16a34a] 
-            text-white flex items-center justify-center gap-2"
+          className="w-1/2 py-5 text-md font-semibold bg-gradient-to-r from-[#4ade80] to-[#22c55e] hover:from-[#22c55e] hover:to-[#16a34a] text-white flex items-center justify-center gap-2"
           onClick={handleAiGeneration}
           disabled={loading || images.length === 0 || !prompt.trim()}
         >
