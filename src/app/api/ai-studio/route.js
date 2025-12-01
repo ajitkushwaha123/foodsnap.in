@@ -3,12 +3,30 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
+function convertToInlineData(files) {
+  if (!files || files.length === 0) return [];
+
+  return Promise.all(
+    files.map(async (file) => {
+      if (!file || typeof file.arrayBuffer !== "function") return null;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+      return {
+        inline_data: { mime_type: file.type, data: base64 },
+      };
+    })
+  ).then((results) => results.filter(Boolean));
+}
+
 export async function POST(req) {
   try {
     const formData = await req.formData();
 
-    const prompt = formData.get("prompt");
-    const images = formData.getAll("images");
+    const prompt = formData.get("prompt")?.toString().trim();
+    const referenceImages = formData.getAll("reference").filter(Boolean);
+    const images = formData.getAll("images").filter(Boolean);
 
     if (!prompt) {
       return NextResponse.json(
@@ -17,21 +35,23 @@ export async function POST(req) {
       );
     }
 
-    const imageParts = await Promise.all(
-      images.map(async (img) => {
-        const arrayBuffer = await img.arrayBuffer();
-        const base64 = Buffer.from(arrayBuffer).toString("base64");
-        return {
-          inline_data: { mime_type: img.type, data: base64 },
-        };
-      })
-    );
+    const refParts = await convertToInlineData(referenceImages);
+    const imageParts = await convertToInlineData(images);
 
     const body = {
       contents: [
         {
           role: "user",
-          parts: [{ text: prompt }, ...imageParts],
+          parts: [
+            {
+              text:
+                referenceImages.length > 0
+                  ? `Use the reference images to match style, colors, layout, and composition.\n\n${prompt}`
+                  : prompt,
+            },
+            ...refParts,
+            ...imageParts,
+          ],
         },
       ],
       generationConfig: {
@@ -56,18 +76,12 @@ export async function POST(req) {
     console.log("Gemini JSON:", json);
 
     let textResult = "";
-    json?.candidates?.forEach((c) => {
-      c?.content?.parts?.forEach((part) => {
-        if (part.text) {
-          textResult += part.text + "\n";
-        }
-      });
-    });
-
     const base64Images = [];
 
     json?.candidates?.forEach((c) => {
       c?.content?.parts?.forEach((part) => {
+        if (part.text) textResult += part.text + "\n";
+
         if (part.inlineData?.data) {
           base64Images.push({
             mimeType: part.inlineData.mimeType || "image/jpeg",
