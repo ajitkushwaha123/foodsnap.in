@@ -79,7 +79,7 @@ function InnerAppShell({ isAuthPage, children }) {
         </SidebarInset>
 
         {openStudio && (
-          <div className="h-full hidden md:block sticky right-0 top-0">
+          <div className="h-full hidden sticky right-0 top-0">
             <StudioSidebar />
           </div>
         )}
