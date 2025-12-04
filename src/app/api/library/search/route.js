@@ -15,12 +15,52 @@ export const GET = async (req) => {
       return NextResponse.json({ error: "Login required" }, { status: 401 });
 
     const user = await User.findById(userId);
+
     if (!user)
       return NextResponse.json({ error: "Invalid user" }, { status: 404 });
     if (user.subscription.plan === "free")
       return NextResponse.json({ error: "Upgrade to search" }, { status: 402 });
     if (user.credits <= 0)
       return NextResponse.json({ error: "No credits left" }, { status: 402 });
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          error: "User not found. Contact support.",
+          action: {
+            redirect: "/support",
+            buttonText: "Contact Support",
+          },
+        },
+        { status: 404 }
+      );
+    }
+
+    // if (user.subscription.plan === "free") {
+    //   return NextResponse.json(
+    //     {
+    //       error: "Upgrade Your Plan to search.",
+    //       action: {
+    //         redirect: "/pricing",
+    //         buttonText: "View Plans",
+    //       },
+    //     },
+    //     { status: 402 }
+    //   );
+    // }
+
+    if (user.credits <= 0) {
+      return NextResponse.json(
+        {
+          error: "You are out of credits.",
+          action: {
+            redirect: "/pricing",
+            buttonText: "View Plans",
+          },
+        },
+        { status: 402 }
+      );
+    }
 
     // --- Search Params ---
     const { searchParams } = new URL(req.url);

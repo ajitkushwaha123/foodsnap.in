@@ -18,34 +18,34 @@ export default function AppShell({ children }) {
   const AUTH_ROUTES = ["/sign-in", "/sign-up"];
   const isAuthPage = AUTH_ROUTES.includes(pathname);
 
-  // useEffect(() => {
-  //   const handleContext = (e) => e.preventDefault();
-  //   document.addEventListener("contextmenu", handleContext);
-  //   return () => document.removeEventListener("contextmenu", handleContext);
-  // }, []);
+  useEffect(() => {
+    const handleContext = (e) => e.preventDefault();
+    document.addEventListener("contextmenu", handleContext);
+    return () => document.removeEventListener("contextmenu", handleContext);
+  }, []);
 
-  // useEffect(() => {
-  //   const preventDrag = (e) => {
-  //     if (e.target.tagName === "IMG") e.preventDefault();
-  //   };
+  useEffect(() => {
+    const preventDrag = (e) => {
+      if (e.target.tagName === "IMG") e.preventDefault();
+    };
 
-  //   document.addEventListener("dragstart", preventDrag);
-  //   return () => document.removeEventListener("dragstart", preventDrag);
-  // }, []);
+    document.addEventListener("dragstart", preventDrag);
+    return () => document.removeEventListener("dragstart", preventDrag);
+  }, []);
 
-  // useEffect(() => {
-  //   const blockLongPress = (e) => {
-  //     if (e.target.tagName === "IMG") e.preventDefault();
-  //   };
+  useEffect(() => {
+    const blockLongPress = (e) => {
+      if (e.target.tagName === "IMG") e.preventDefault();
+    };
 
-  //   document.addEventListener("touchstart", blockLongPress, { passive: false });
-  //   document.addEventListener("touchend", blockLongPress, { passive: false });
+    document.addEventListener("touchstart", blockLongPress, { passive: false });
+    document.addEventListener("touchend", blockLongPress, { passive: false });
 
-  //   return () => {
-  //     document.removeEventListener("touchstart", blockLongPress);
-  //     document.removeEventListener("touchend", blockLongPress);
-  //   };
-  // }, []);
+    return () => {
+      document.removeEventListener("touchstart", blockLongPress);
+      document.removeEventListener("touchend", blockLongPress);
+    };
+  }, []);
 
   return (
     <Provider store={store}>
@@ -79,11 +79,15 @@ function InnerAppShell({ isAuthPage, children }) {
           <main className="flex-1 overflow-y-auto min-w-0">{children}</main>
         </SidebarInset>
 
-        {openStudio && (
+        {/* {openStudio && (
+
           <div className="h-full hidden md:block sticky right-0 top-0">
             <AiStudio />
+
+          <div className="h-full hidden sticky right-0 top-0">
+            <StudioSidebar />
           </div>
-        )}
+        )} */}
       </div>
     </SidebarProvider>
   );
