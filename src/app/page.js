@@ -87,7 +87,7 @@ const Page = () => {
       {showResults && (
         <div
           className={`mt-6 grid grid-cols-1 sm:grid-cols-2 ${
-            openStudio == true ? "lg:grid-cols-3" : "lg:grid-cols-4"
+            openStudio == true ? "lg:grid-cols-2" : "lg:grid-cols-4"
           } gap-5`}
         >
           {results.map((item) => (

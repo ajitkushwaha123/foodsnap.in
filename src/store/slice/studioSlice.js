@@ -6,16 +6,23 @@ export const fetchAIResponse = createAsyncThunk(
     try {
       const response = await fetch("/api/ai-studio", {
         method: "POST",
-        // Do NOT set "Content-Type" for FormData
         body: formData,
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        return rejectWithValue(errorData);
+        return rejectWithValue(
+          data.error || data.raw?.error?.message || "Request failed"
+        );
       }
 
-      const data = await response.json();
+      if (data.error) {
+        return rejectWithValue(
+          data.error || data.raw?.error?.message || "AI Error occurred"
+        );
+      }
+
       return data;
     } catch (error) {
       return rejectWithValue(error.message);

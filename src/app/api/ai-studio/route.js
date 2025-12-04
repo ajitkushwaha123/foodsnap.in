@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-function convertToInlineData(files) {
+// Convert File objects to base64 inline data
+async function convertToInlineData(files) {
   if (!files || files.length === 0) return [];
 
-  return Promise.all(
+  const results = await Promise.all(
     files.map(async (file) => {
       if (!file || typeof file.arrayBuffer !== "function") return null;
 
@@ -17,7 +18,9 @@ function convertToInlineData(files) {
         inline_data: { mime_type: file.type, data: base64 },
       };
     })
-  ).then((results) => results.filter(Boolean));
+  );
+
+  return results.filter(Boolean);
 }
 
 export async function POST(req) {
@@ -25,7 +28,7 @@ export async function POST(req) {
     const formData = await req.formData();
 
     const prompt = formData.get("prompt")?.toString().trim();
-    const referenceImages = formData.getAll("reference").filter(Boolean);
+    const referenceImages = formData.getAll("referenceImage").filter(Boolean);
     const images = formData.getAll("images").filter(Boolean);
 
     if (!prompt) {
@@ -73,19 +76,27 @@ export async function POST(req) {
     );
 
     const json = await response.json();
-    console.log("Gemini JSON:", json);
+
+    // Check if Gemini returned an error
+    if (!response.ok || json.error) {
+      const errMsg = json.error?.message || "Gemini API returned an error";
+      return NextResponse.json(
+        { error: errMsg },
+        { status: response.status || 500 }
+      );
+    }
 
     let textResult = "";
     const base64Images = [];
 
-    json?.candidates?.forEach((c) => {
-      c?.content?.parts?.forEach((part) => {
+    json?.candidates?.forEach((candidate) => {
+      candidate?.content?.parts?.forEach((part) => {
         if (part.text) textResult += part.text + "\n";
 
-        if (part.inlineData?.data) {
+        if (part.inline_data?.data) {
           base64Images.push({
-            mimeType: part.inlineData.mimeType || "image/jpeg",
-            base64: part.inlineData.data,
+            mimeType: part.inline_data.mime_type || "image/jpeg",
+            base64: part.inline_data.data,
           });
         }
       });
@@ -110,6 +121,7 @@ export async function POST(req) {
       raw: json,
     });
   } catch (err) {
+    // Return actual error from Gemini if available
     return NextResponse.json(
       { error: err.message || "Something went wrong" },
       { status: 500 }

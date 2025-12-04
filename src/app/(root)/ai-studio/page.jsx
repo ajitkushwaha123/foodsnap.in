@@ -1,9 +1,12 @@
-import React from 'react'
+import AiStudio from "@/components/global/ai-studio";
+import React from "react";
 
 const page = () => {
   return (
-    <div>page</div>
-  )
-}
+    <div>
+      <AiStudio />
+    </div>
+  );
+};
 
-export default page
+export default page;

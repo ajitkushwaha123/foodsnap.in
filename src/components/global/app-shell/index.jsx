@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/ui/site-header";
 import Notification from "../notification";
 import StudioSidebar from "../ai-studio/StudioSidebar";
 import { useSearch } from "@/store/hooks/useSearch";
+import AiStudio from "../ai-studio";
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
@@ -80,7 +81,7 @@ function InnerAppShell({ isAuthPage, children }) {
 
         {openStudio && (
           <div className="h-full hidden md:block sticky right-0 top-0">
-            <StudioSidebar />
+            <AiStudio />
           </div>
         )}
       </div>

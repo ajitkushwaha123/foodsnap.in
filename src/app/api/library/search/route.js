@@ -4,193 +4,120 @@ import Image from "@/models/Image";
 import User from "@/models/User";
 import { NextResponse } from "next/server";
 
-export const OPTIONS = async () =>
-  NextResponse.json({}, { status: 204, headers: corsHeaders });
-
 export const GET = async (req) => {
   try {
     await dbConnect();
 
+    // --- Auth Checks ---
     const authResult = await getUserId(req);
     const userId = authResult?.userId;
-
-    if (!userId) {
-      return NextResponse.json(
-        {
-          error: "Unauthorized. Please login to continue.",
-          action: {
-            redirect: "/login",
-            buttonText: "Login",
-          },
-        },
-        { status: 401 }
-      );
-    }
+    if (!userId)
+      return NextResponse.json({ error: "Login required" }, { status: 401 });
 
     const user = await User.findById(userId);
-    if (!user) {
-      return NextResponse.json(
-        {
-          error: "User not found. Contact support.",
-          action: {
-            redirect: "/support",
-            buttonText: "Contact Support",
-          },
-        },
-        { status: 404 }
-      );
-    }
+    if (!user)
+      return NextResponse.json({ error: "Invalid user" }, { status: 404 });
+    if (user.subscription.plan === "free")
+      return NextResponse.json({ error: "Upgrade to search" }, { status: 402 });
+    if (user.credits <= 0)
+      return NextResponse.json({ error: "No credits left" }, { status: 402 });
 
-    if (user.subscription.plan === "free") {
-      return NextResponse.json(
-        {
-          error: "Upgrade Your Plan to search.",
-          action: {
-            redirect: "/pricing",
-            buttonText: "View Plans",
-          },
-        },
-        { status: 402 }
-      );
-    }
-
-    if (user.credits <= 0) {
-      return NextResponse.json(
-        {
-          error: "You are out of credits.",
-          action: {
-            redirect: "/pricing",
-            buttonText: "View Plans",
-          },
-        },
-        { status: 402 }
-      );
-    }
-
+    // --- Search Params ---
     const { searchParams } = new URL(req.url);
-    const query = searchParams.get("search")?.trim();
+    const rawQuery = searchParams.get("search")?.trim();
 
-    if (!query) {
-      return NextResponse.json(
-        { error: "Search query is required" },
-        { status: 400 }
-      );
+    if (!rawQuery) {
+      return NextResponse.json({ error: "Query required" }, { status: 400 });
     }
 
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = 12;
     const skip = (page - 1) * limit;
 
-    const filters = { approved: true };
     const category = searchParams.get("category");
-    const region = searchParams.get("region");
-    const premium = searchParams.get("premium");
+    const isCombo = searchParams.get("isCombo") === "true";
+    const isThali = searchParams.get("isThali") === "true";
 
-    if (category) filters.category = category;
-    if (region) filters.region = region;
-    if (premium === "true") filters.premium = true;
+    // --- Logic Fix: Escape & Tokenize ---
+    const safeQuery = rawQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const tokens = safeQuery.split(/\s+/).filter((t) => t.length > 0);
 
-    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Regex Patterns
+    const exactRegex = new RegExp(`^${safeQuery}$`, "i");
+    const phraseRegex = new RegExp(`${safeQuery}`, "i");
+    const tokensRegex = tokens.map((t) => new RegExp(t, "i"));
 
-    const safeQuery = escapeRegex(query);
-
-    const searchPipeline = [
+    const pipeline = [
       {
-        $search: {
-          index: "searchIndex",
-          compound: {
-            should: [
-              {
-                phrase: {
-                  query,
-                  path: "title",
-                  score: { boost: { value: 20 } },
-                },
-              },
-              {
-                text: {
-                  query,
-                  path: "title",
-                  score: { boost: { value: 12 } },
-                },
-              },
-              {
-                text: {
-                  query,
-                  path: ["manual_tags", "auto_tags", "cuisine"],
-                  score: { boost: { value: 6 } },
-                  fuzzy: { maxEdits: 1 },
-                },
-              },
-              {
-                autocomplete: {
-                  query,
-                  path: "title",
-                  score: { boost: { value: 3 } },
-                  fuzzy: { maxEdits: 1, prefixLength: 1 },
-                },
-              },
-              {
-                text: {
-                  query,
-                  path: "description",
-                  score: { boost: { value: 1 } },
-                },
-              },
-            ],
-            minimumShouldMatch: 1,
-          },
+        $match: {
+          approved: true,
+          ...(category ? { category } : {}),
+          ...(isCombo ? { isCombo: true } : {}),
+          ...(isThali ? { isThali: true } : {}),
+          // Strict Filter: Must match at least one word from the query
+          $or: [{ title: phraseRegex }, { title: { $in: tokensRegex } }],
         },
       },
-
-      { $match: filters },
-
       {
         $addFields: {
-          exactTitleMatch: {
+          // --- SCORING REBALANCED FOR STABILITY ---
+          // Text matches now give massive points to overpower metadata (downloads)
+          scoreExact: {
             $cond: [
-              {
-                $regexMatch: {
-                  input: "$title",
-                  regex: new RegExp(`^${safeQuery}$`, "i"),
-                },
-              },
-              15,
+              { $regexMatch: { input: "$title", regex: exactRegex } },
+              10000,
               0,
             ],
           },
-          partialTitleMatch: {
+          scorePhrase: {
             $cond: [
+              { $regexMatch: { input: "$title", regex: phraseRegex } },
+              5000,
+              0,
+            ],
+          },
+          scoreToken: {
+            $multiply: [
               {
-                $regexMatch: {
-                  input: "$title",
-                  regex: new RegExp(`\\b${safeQuery}\\b`, "i"),
+                $size: {
+                  $filter: {
+                    input: tokens,
+                    as: "token",
+                    cond: {
+                      $regexMatch: {
+                        input: "$title",
+                        regex: { $concat: ["", "$$token"] },
+                        options: "i",
+                      },
+                    },
+                  },
                 },
               },
-              5,
-              0,
+              1000, // 1000 points per matching word
             ],
           },
         },
       },
-
       {
         $addFields: {
-          score: {
+          finalRank: {
             $add: [
-              { $meta: "searchScore" },
-              "$exactTitleMatch",
-              "$partialTitleMatch",
-              { $multiply: ["$quality_score", 0.5] },
-              { $multiply: ["$popularity_score", 0.3] },
-              { $multiply: ["$likes", 0.2] },
+              "$scoreExact",
+              "$scorePhrase",
+              "$scoreToken",
+              // Metadata is now just a "nudge" (Max impact ~500 points)
+              // This prevents a popular "Red Car" from outranking a "Red Apple" for query "Apple"
+              { $multiply: ["$downloads", 0.5] },
+              { $cond: [{ $eq: ["$premium", true] }, 100, 0] },
             ],
           },
         },
       },
-
-      { $sort: { score: -1 } },
-
+      // --- CRITICAL FIX: DETERMINISTIC SORTING ---
+      // 1. Sort by Rank (Relevance)
+      // 2. Tie-breaker 1: Sort by Downloads (Popularity)
+      // 3. Tie-breaker 2: Sort by ID (Guarantees consistent order every time)
+      { $sort: { finalRank: -1, downloads: -1, _id: 1 } },
       {
         $facet: {
           paginatedResults: [
@@ -198,9 +125,10 @@ export const GET = async (req) => {
             { $limit: limit },
             {
               $project: {
-                _id: 1,
+                id: 1,
                 title: 1,
                 image_url: 1,
+                finalRank: 1,
               },
             },
           ],
@@ -209,38 +137,31 @@ export const GET = async (req) => {
       },
     ];
 
-    const aggregationResult = await Image.aggregate(searchPipeline);
+    const searchResult = await Image.aggregate(pipeline);
 
-    const results = aggregationResult[0]?.paginatedResults || [];
-    const total = aggregationResult[0]?.totalCount?.[0]?.count || 0;
+    const results = searchResult[0]?.paginatedResults || [];
+    const total = searchResult[0]?.totalCount[0]?.count || 0;
     const totalPages = Math.ceil(total / limit);
 
-    return NextResponse.json(
-      {
-        results,
-        pagination: {
-          page,
-          totalPages,
-          total,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1,
-          limit,
-        },
-        message: `Couldn't find results for "${query}". Try Submitting a Request.`,
+    const responseData = {
+      results,
+      pagination: {
+        page,
+        totalPages,
+        total,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        limit,
       },
-      { status: 200 }
-    );
+    };
+
+    if (results.length === 0) {
+      responseData.message = `Couldn't find results for "${rawQuery}". Try Submitting a Request.`;
+    }
+
+    return NextResponse.json(responseData, { status: 200 });
   } catch (error) {
     console.error("[SEARCH_ERROR]", error);
-    return NextResponse.json(
-      {
-        error: "An error occurred while processing your request.",
-        action: {
-          redirect: "/support",
-          buttonText: "Contact Support",
-        },
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
 };
