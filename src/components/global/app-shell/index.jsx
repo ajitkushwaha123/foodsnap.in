@@ -79,15 +79,14 @@ function InnerAppShell({ isAuthPage, children }) {
           <main className="flex-1 overflow-y-auto min-w-0">{children}</main>
         </SidebarInset>
 
-        {/* {openStudio && (
-
+        {openStudio && (
           <div className="h-full hidden md:block sticky right-0 top-0">
             <AiStudio />
 
-          <div className="h-full hidden sticky right-0 top-0">
-            <StudioSidebar />
+            {/* <div className="h-full hidden sticky right-0 top-0">
+            <StudioSidebar /> */}
           </div>
-        )} */}
+        )}
       </div>
     </SidebarProvider>
   );

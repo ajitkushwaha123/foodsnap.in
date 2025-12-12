@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import ImageUploader from "./ImageUploader";
 import ReferenceSelector from "./ReferenceSelector";
 import ReferenceItemsEditor from "./ReferenceItemsEditor";
@@ -13,7 +11,6 @@ export default function Reference({ value, onChange }) {
   const [items, setItems] = useState(value?.items || []);
   const [replaceItems, setReplaceItems] = useState(value?.replaceItems || []);
 
-  // Helper to update parent with current state
   const updateParent = (newState = {}) => {
     const state = {
       reference,
@@ -26,50 +23,83 @@ export default function Reference({ value, onChange }) {
     onChange?.(state);
   };
 
-  // Upload new reference image
+  // -------------------------------
+  // Handle Upload (File Upload)
+  // -------------------------------
   const handleUpload = (files) => {
-    const file = files?.[0];
-    if (!file) return;
+    if (!files || files.length === 0) return;
+
+    let file = files[0];
+
+    if (file?.file instanceof File) {
+      file = file.file;
+    }
+
+    if (!(file instanceof File)) {
+      console.warn("Uploaded item is not a File:", file);
+      return;
+    }
 
     const url = URL.createObjectURL(file);
     const newReference = { url, file, uploaded: true };
+
     setReference(newReference);
-    setItems([]); // clear items on new upload
+    setItems([]);
+
     updateParent({ reference: newReference, items: [] });
   };
 
+  // -------------------------------
   // Remove reference image
+  // -------------------------------
   const handleRemove = () => {
     setReference(null);
     setItems([]);
-    updateParent({ reference: null, items: [] });
+    setReplaceItems([]);
+    updateParent({ reference: null, items: [], replaceItems: [] });
   };
 
-  // Select preset image
-  const handleSelectPreset = (preset) => {
-    setReference(preset);
-    setItems(preset.items || []);
-    updateParent({ reference: preset, items: preset.items || [] });
+  // -------------------------------
+  // Handle PRESET selection (FIXED)
+  // -------------------------------
+  const handleSelectPreset = ({ reference, items, replaceItems }) => {
+    setReference(reference);
+    setItems(items || []);
+    setReplaceItems(replaceItems || []);
+
+    updateParent({
+      reference,
+      items: items || [],
+      replaceItems: replaceItems || [],
+    });
   };
 
-  // Change category and load presets
+  // -------------------------------
+  // Handle Category change
+  // -------------------------------
   const handleSelectCategory = (cat) => {
-    setCategory(cat);
     const newPresets = referencePresets[cat] || [];
+
+    setCategory(cat);
     setPresets(newPresets);
+
     updateParent({ category: cat, presets: newPresets });
   };
 
-  // Reference Items Editor handlers
+  // -------------------------------
+  // Item Editing
+  // -------------------------------
   const updateItem = (idx, value) => {
     const newItems = [...items];
     newItems[idx] = value;
+
     setItems(newItems);
     updateParent({ items: newItems });
   };
 
   const deleteItem = (idx) => {
     const newItems = items.filter((_, i) => i !== idx);
+
     setItems(newItems);
     updateParent({ items: newItems });
   };
@@ -77,14 +107,17 @@ export default function Reference({ value, onChange }) {
   const addItem = () => {
     const newItems = [...items, ""];
     const newReplace = [...replaceItems, ""];
+
     setItems(newItems);
     setReplaceItems(newReplace);
+
     updateParent({ items: newItems, replaceItems: newReplace });
   };
 
   const updateReplacement = (idx, value) => {
     const newReplace = [...replaceItems];
     newReplace[idx] = value;
+
     setReplaceItems(newReplace);
     updateParent({ replaceItems: newReplace });
   };
@@ -92,32 +125,31 @@ export default function Reference({ value, onChange }) {
   const deleteReplacement = (idx) => {
     const newReplace = [...replaceItems];
     newReplace[idx] = "";
+
     setReplaceItems(newReplace);
     updateParent({ replaceItems: newReplace });
   };
 
   return (
     <div className="space-y-6">
-      {/* Upload / Display Reference Image */}
       <ImageUploader
         images={reference ? [reference] : []}
         onChange={handleUpload}
         maxImages={1}
         label="Reference Image"
+        onRemove={handleRemove}
       />
 
-      {/* Category & Preset Selector */}
       <ReferenceSelector
         category={category}
         presets={presets}
         reference={reference}
         onSelectCategory={handleSelectCategory}
-        onSelectPreset={handleSelectPreset}
+        onSelectPreset={handleSelectPreset} // <-- FIXED
         onUpload={handleUpload}
         onRemove={handleRemove}
       />
 
-      {/* Reference Items Editor */}
       {items.length > 0 && (
         <ReferenceItemsEditor
           items={items}

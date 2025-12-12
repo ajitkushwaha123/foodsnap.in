@@ -25,6 +25,8 @@ const AiStudio = () => {
     replaceItems: [],
   });
 
+  console.log(referenceData);
+
   const handleAiGeneration = () => {
     if (!prompt.trim()) return alert("Enter a prompt!");
     if (images.length === 0) return alert("Upload at least one main image!");

@@ -3,20 +3,18 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-// Convert File objects to base64 inline data
+// Convert uploaded files → Gemini inlineData format
 async function convertToInlineData(files) {
   if (!files || files.length === 0) return [];
 
   const results = await Promise.all(
     files.map(async (file) => {
-      if (!file || typeof file.arrayBuffer !== "function") return null;
+      if (!file?.arrayBuffer) return null;
 
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = Buffer.from(arrayBuffer).toString("base64");
+      const buffer = await file.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString("base64");
 
-      return {
-        inline_data: { mime_type: file.type, data: base64 },
-      };
+      return { inlineData: { mimeType: file.type, data: base64 } };
     })
   );
 
@@ -27,10 +25,8 @@ export async function POST(req) {
   try {
     const formData = await req.formData();
 
+    // Base prompt
     const prompt = formData.get("prompt")?.toString().trim();
-    const referenceImages = formData.getAll("referenceImage").filter(Boolean);
-    const images = formData.getAll("images").filter(Boolean);
-
     if (!prompt) {
       return NextResponse.json(
         { error: "Prompt is required" },
@@ -38,9 +34,61 @@ export async function POST(req) {
       );
     }
 
+    // File inputs
+    const referenceImages = formData.getAll("referenceImage").filter(Boolean);
+    const images = formData.getAll("images").filter(Boolean);
+
+    // Parse reference + replacement items
+    let referenceItems = [];
+    let replacementItems = [];
+
+    try {
+      referenceItems = JSON.parse(formData.get("referenceItems") || "[]");
+      replacementItems = JSON.parse(formData.get("replacementItems") || "[]");
+    } catch (e) {
+      referenceItems = [];
+      replacementItems = [];
+    }
+
+    // ------------------------------
+    // Build model-understandable food modification instructions
+    // ------------------------------
+
+    function buildModificationText() {
+      if (referenceItems.length === 0) return "";
+
+      let lines = [];
+
+      const category = formData.get("category") || "general";
+      lines.push(`Base Category: ${category}`);
+      lines.push(`\nItems to Use:`);
+
+      referenceItems.forEach((item, i) => {
+        const rep = replacementItems[i];
+
+        if (rep && rep.trim() !== "") {
+          lines.push(`- ${rep} (replaced: ${item} → ${rep})`);
+        } else {
+          lines.push(`- ${item}`);
+        }
+      });
+
+      lines.push(
+        `\nUse the modified list above to generate the final food composition.`
+      );
+
+      return lines.join("\n");
+    }
+
+    const modificationPrompt = buildModificationText();
+
+    const finalPrompt = `${prompt}\n\n${modificationPrompt}`;
+
+    // Convert images → inline data
     const refParts = await convertToInlineData(referenceImages);
     const imageParts = await convertToInlineData(images);
 
+    // Gemini request body
     const body = {
       contents: [
         {
@@ -49,8 +97,8 @@ export async function POST(req) {
             {
               text:
                 referenceImages.length > 0
-                  ? `Use the reference images to match style, colors, layout, and composition.\n\n${prompt}`
-                  : prompt,
+                  ? `Use the reference images to match styling.\n\n${finalPrompt}`
+                  : finalPrompt,
             },
             ...refParts,
             ...imageParts,
@@ -63,11 +111,11 @@ export async function POST(req) {
       },
     };
 
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    const MODEL_ID = "gemini-3-pro-image-preview";
+    console.log("cghj", body.contents[0].parts[0].text);
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${GEMINI_API_KEY}`,
+    // Send to Gemini
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -75,17 +123,17 @@ export async function POST(req) {
       }
     );
 
-    const json = await response.json();
+    const json = await resp.json();
+    console.log("GEMINI RESPONSE:", json);
 
-    // Check if Gemini returned an error
-    if (!response.ok || json.error) {
-      const errMsg = json.error?.message || "Gemini API returned an error";
+    if (!resp.ok || json.error) {
       return NextResponse.json(
-        { error: errMsg },
-        { status: response.status || 500 }
+        { error: json.error?.message || "Gemini API error" },
+        { status: resp.status || 500 }
       );
     }
 
+    // Extract text + images
     let textResult = "";
     const base64Images = [];
 
@@ -93,37 +141,32 @@ export async function POST(req) {
       candidate?.content?.parts?.forEach((part) => {
         if (part.text) textResult += part.text + "\n";
 
-        if (part.inline_data?.data) {
+        if (part.inlineData?.data) {
           base64Images.push({
-            mimeType: part.inline_data.mime_type || "image/jpeg",
-            base64: part.inline_data.data,
+            mimeType: part.inlineData.mimeType || "image/jpeg",
+            base64: part.inlineData.data,
           });
         }
       });
     });
 
-    if (base64Images.length === 0 && !textResult.trim()) {
-      throw new Error("No content found in Gemini response");
-    }
-
-    const uploadedImages = [];
-
+    // Upload images to S3
+    const uploaded = [];
     for (const img of base64Images) {
       const buffer = Buffer.from(img.base64, "base64");
       const url = await uploadToS3(buffer, "ai-studio");
-      uploadedImages.push(url);
+      uploaded.push(url);
     }
 
     return NextResponse.json({
       success: true,
       text: textResult.trim(),
-      images: uploadedImages,
+      images: uploaded,
       raw: json,
     });
   } catch (err) {
-    // Return actual error from Gemini if available
     return NextResponse.json(
-      { error: err.message || "Something went wrong" },
+      { error: err.message || "Server error" },
       { status: 500 }
     );
   }

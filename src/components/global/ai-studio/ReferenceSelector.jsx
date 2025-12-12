@@ -14,7 +14,38 @@ export default function ReferenceSelector({
   onUpload = () => {},
   onRemove = () => {},
 }) {
-  const refInput = useRef();
+  const refInput = useRef(null);
+
+  const selectPresetAsBlob = async (preset) => {
+    if (!preset?.url) return;
+
+    const res = await fetch(preset.url);
+    const blob = await res.blob();
+
+    const file = new File([blob], "preset.jpg", { type: blob.type });
+
+    const blobUrl = URL.createObjectURL(file);
+
+    const referenceObj = {
+      url: blobUrl,
+      file,
+      uploaded: false,
+    };
+
+    // ⭐ Send reference + items + replaceItems together
+    onSelectPreset({
+      reference: referenceObj,
+      items: preset.items || [],
+      replaceItems: preset.replaceItems || [],
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      onUpload(files);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -27,8 +58,8 @@ export default function ReferenceSelector({
         placeholder="Select category"
         className="w-full"
       />
-      
-      <div className="grid grid-cols-2 gap-2">
+
+      <div className="grid grid-cols-4 gap-2">
         {presets.length === 0 && (
           <p className="text-xs text-gray-500 col-span-2">
             {category ? "No presets available" : "Select a category first"}
@@ -38,41 +69,17 @@ export default function ReferenceSelector({
         {presets.map((preset, index) => (
           <div
             key={index}
-            onClick={() => onSelectPreset(preset)}
+            onClick={() => selectPresetAsBlob(preset)}
             className="cursor-pointer border rounded overflow-hidden hover:opacity-80 transition"
           >
-            <img src={preset.url} className="h-20 w-full object-cover" />
+            <img
+              src={preset?.url || "/placeholder.png"}
+              alt=""
+              className="aspects-[3/2] object-cover"
+            />
           </div>
         ))}
       </div>
-
-      {!reference ? (
-        <div
-          onClick={() => refInput.current?.click()}
-          className="border-2 border-dashed rounded-xl h-32 flex items-center 
-                     justify-center cursor-pointer hover:bg-gray-50"
-        >
-          <Upload className="w-8 h-8 text-gray-400" />
-          <input
-            ref={refInput}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => onUpload(e.target.files)}
-          />
-        </div>
-      ) : (
-        <div className="relative rounded-lg overflow-hidden border">
-          <img src={reference.url} className="h-32 w-full object-cover" />
-
-          <button
-            onClick={onRemove}
-            className="absolute top-2 right-2 bg-black/70 text-white p-1 rounded-full"
-          >
-            <X size={15} />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

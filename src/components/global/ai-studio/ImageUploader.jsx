@@ -8,6 +8,7 @@ export default function ImageUploader({
   onChange,
   maxImages = 4,
   label = "Upload Images",
+  onRemove,
 }) {
   const inputRef = React.useRef();
   const [error, setError] = useState("");
@@ -17,13 +18,14 @@ export default function ImageUploader({
   const handleFiles = (files) => {
     setError("");
 
+    if (!files || files.length === 0) return;
+
     if (images.length >= maxImages) {
       setError(`You can upload only ${maxImages} images.`);
       return;
     }
 
     let incoming = Array.from(files);
-
     const valid = [];
 
     for (const file of incoming) {
@@ -33,7 +35,6 @@ export default function ImageUploader({
         );
         continue;
       }
-
       valid.push(file);
     }
 
@@ -48,15 +49,31 @@ export default function ImageUploader({
 
     const mapped = sliced.map((file) => ({
       file,
-      url: URL.createObjectURL(file),
+      url: URL.createObjectURL(file), // Safe
+      uploaded: true,
     }));
 
+    // Merge with existing static URLs or previously mapped blobs
     onChange([...images, ...mapped]);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     handleFiles(e.dataTransfer.files);
+  };
+
+  const handleRemove = (index) => {
+    const img = images[index];
+
+    // cleanup blob URL if applicable
+    if (img?.uploaded && img?.url?.startsWith("blob:")) {
+      URL.revokeObjectURL(img.url);
+    }
+
+    const updated = images.filter((_, i) => i !== index);
+    onChange(updated);
+
+    if (onRemove) onRemove(img);
   };
 
   return (
@@ -92,14 +109,19 @@ export default function ImageUploader({
       {images?.length > 0 && (
         <div className="grid grid-cols-4 gap-3 mt-3">
           {images.map((img, i) => (
-            <div key={i} className="relative rounded-lg overflow-hidden border">
-              <img src={img.url} className="h-28 w-full object-cover" />
+            <div
+              key={i}
+              className="relative rounded-lg overflow-hidden border bg-white"
+            >
+              <img
+                src={img.url}
+                alt=""
+                className="h-28 w-full object-cover"
+                draggable={false}
+              />
 
               <button
-                onClick={() => {
-                  const updated = images.filter((_, x) => x !== i);
-                  onChange(updated);
-                }}
+                onClick={() => handleRemove(i)}
                 className="absolute top-2 right-2 bg-black/70 text-white p-1 rounded-full"
               >
                 <X size={14} />

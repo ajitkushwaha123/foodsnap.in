@@ -36,7 +36,7 @@ export const referencePresets = {
         "Paitha",
       ],
     },
-    { url: "/assets/thali/thali3.png", items: ["rice", "curry", "salad"] },
+    { url: "/assets/thali/thali3.jpg", items: ["chole", "chawal", "onion"] },
   ],
 
   bowl: [
