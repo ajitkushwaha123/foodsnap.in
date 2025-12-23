@@ -18,7 +18,6 @@ export const GET = async () => {
 
     return response;
   } catch (err) {
-    console.error("Logout error:", err);
 
     return NextResponse.json(
       { success: false, message: "An internal server error occurred." },
