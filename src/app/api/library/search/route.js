@@ -36,18 +36,18 @@ export const GET = async (req) => {
       );
     }
 
-    if (user.subscription.plan === "free") {
-      return NextResponse.json(
-        {
-          error: "Upgrade Your Plan to search.",
-          action: {
-            redirect: "/pricing",
-            buttonText: "View Plans",
-          },
-        },
-        { status: 402 }
-      );
-    }
+    // if (user.subscription.plan === "free") {
+    //   return NextResponse.json(
+    //     {
+    //       error: "Upgrade Your Plan to search.",
+    //       action: {
+    //         redirect: "/pricing",
+    //         buttonText: "View Plans",
+    //       },
+    //     },
+    //     { status: 402 }
+    //   );
+    // }
 
     if (user.credits <= 0) {
       return NextResponse.json(
